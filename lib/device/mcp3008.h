@@ -2,7 +2,7 @@
 #ifndef LIBPAS_MCP3008_H
 #define LIBPAS_MCP3008_H
 
-#include "gpio.h"
+#include "../gpio.h"
 
 
 extern mcp3008_init(int sclk, int cs, int mosi, int miso);

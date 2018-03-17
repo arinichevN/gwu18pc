@@ -7,18 +7,20 @@ int onewire_reset(int pin) {
     pinModeOut(pin);
     pinLow(pin);
     delayUsBusy(640); 
-    pinHigh(pin);
+    pinHigh(pin); 
     pinModeIn(pin);
     for (int i = 80; i; i--) {
         if (!pinRead(pin)) {
-            while (!pinRead(pin)) {
+            for (int i = 250; i; i--) {
+                if(pinRead(pin)){
+                    return 1;
+                }
+                delayUsBusy(1);
             }
-            pinModeOut(pin);
-            return 1;
+            return 0;
         }
         delayUsBusy(1);
     }
-    pinModeOut(pin);
     delayUsBusy(1);
     return 0;
 }
@@ -41,6 +43,7 @@ void onewire_send_bit1(int pin,int bit) {
 */
 
 void onewire_send_bit(int pin,int bit) {
+    pinModeOut(pin);
     pinLow(pin);
     if (bit) {
         delayUsBusy(1); 
@@ -79,6 +82,7 @@ int onewire_read_bit(int pin) {
 */
 
 int onewire_read_bit(int pin) {
+    pinModeOut(pin);
     pinLow(pin);
     delayUsBusy(2); 
     pinHigh(pin);

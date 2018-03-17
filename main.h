@@ -9,7 +9,7 @@
 #include "lib/udp.h"
 #include "lib/tsv.h"
 #include "lib/lcorrection.h"
-#include "lib/ds18b20.h"
+#include "lib/device/ds18b20.h"
 
 #define APP_NAME gwu18pc
 #define APP_NAME_STR TOSTRING(APP_NAME)
@@ -41,9 +41,7 @@ struct device_st {
     int pin;
     uint8_t address[DS18B20_SCRATCHPAD_BYTE_NUM];
     int resolution;
-    float value;
-    int value_state; //0 if reading value from device failed
-    struct timespec tm;
+    FTS result;
     LCorrection *lcorrection;
     Mutex mutex;
 };

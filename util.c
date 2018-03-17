@@ -93,21 +93,21 @@ int setResolution(Device *item) {
 void deviceRead(Device *item) {
     float v;
     int r = ds18b20_read_temp(item->pin, item->address, &v);
-    if (r || (!r && item->value_state)) {
+    if (r || (!r && item->result.state)) {
         if (lockMutex(&item->mutex)) {
             if (r) {
-                item->tm = getCurrentTime();
-                item->value = v;
-                lcorrect(&item->value, item->lcorrection);
+                item->result.tm = getCurrentTime();
+                item->result.value = v;
+                lcorrect(&item->result.value, item->lcorrection);
             }
-            item->value_state = r;
+            item->result.state = r;
             unlockMutex(&item->mutex);
         }
     }
 }
 
 int catFTS(Device *item, ACPResponse * response) {
-    return acp_responseFTSCat(item->id, item->value, item->tm, item->value_state, response);
+    return acp_responseFTSCat(item->id, item->result.value, item->result.tm, item->result.state, response);
 }
 
 void printData(ACPResponse * response) {
@@ -160,12 +160,12 @@ void printData(ACPResponse * response) {
     SEND_STR("|     id    |   value   |value_state|  tm_sec   |  tm_nsec  |\n")
     SEND_STR("+-----------+-----------+-----------+-----------+-----------+\n")
     FORLISTN(device_list, i) {
-        snprintf(q, sizeof q, "|%11d|%11f|%11d|%11ld|%11ld|\n",
+        snprintf(q, sizeof q, "|%11d|%11.3f|%11d|%11ld|%11ld|\n",
                 DLi.id,
-                DLi.value,
-                DLi.value_state,
-                DLi.tm.tv_sec,
-                DLi.tm.tv_nsec
+                DLi.result.value,
+                DLi.result.state,
+                DLi.result.tm.tv_sec,
+                DLi.result.tm.tv_nsec
                 );
         SEND_STR(q)
     }

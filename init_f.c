@@ -39,7 +39,7 @@ int initDevice(DeviceList *list, LCorrectionList *lcl, const char *data_path) {
         return 1;
     }
     RESIZE_M_LIST(list, n);
-    NULL_LIST(list);
+    
     if (LML != n) {
 #ifdef MODE_DEBUG
         fprintf(stderr, "%s(): failure while resizing list\n", F);
@@ -47,8 +47,9 @@ int initDevice(DeviceList *list, LCorrectionList *lcl, const char *data_path) {
         TSVclear(r);
         return 0;
     }
+    NULL_LIST(list);
     for (int i = 0; i < LML; i++) {
-        LIi.id = TSVgetis(r, i, "id");
+        LIi.id = LIi.result.id =TSVgetis(r, i, "id");
         LIi.pin = TSVgetis(r, i, "pin");
         LIi.resolution = TSVgetis(r, i, "resolution");
         int lcorrection_id = TSVgetis(r, i, "lcorrection_id");
@@ -178,13 +179,14 @@ static int buildThreadUniquePin(Thread *thread) {
         return 0;
     }
     RESIZE_M_LIST(&TUPL, n);
-    NULL_LIST(&TUPL);
+   
     if (TUPLML != n) {
 #ifdef MODE_DEBUG
         fprintf(stderr, "%s(): failure while resizing thread unique pin list where thread_id=%d\n", F, thread->id);
 #endif
         return 0;
     }
+     NULL_LIST(&TUPL);
     for (size_t i = 0; i < TDLL; i++) {
         int f = 0;
         for (size_t j = i + 1; j < TDLL; j++) {
@@ -227,8 +229,8 @@ int initThread(ThreadList *list, DeviceList *dl, const char *thread_path, const 
 #endif
         return 0;
     }
-    RESIZE_M_LIST(list, n);printf("threads count: %d\n", n);
-    NULL_LIST(list);
+    RESIZE_M_LIST(list, n);
+    
     if (LML != n) {
 #ifdef MODE_DEBUG
         fprintf(stderr, "%s(): failure while resizing list\n", F);
@@ -236,6 +238,7 @@ int initThread(ThreadList *list, DeviceList *dl, const char *thread_path, const 
         TSVclear(r);
         return 0;
     }
+    NULL_LIST(list);
     for (int i = 0; i < LML; i++) {
         LIi.id = TSVgetis(r, i, "id");
         LIi.cycle_duration.tv_sec = TSVgetis(r, i, "cd_sec");
@@ -294,8 +297,10 @@ int initThread(ThreadList *list, DeviceList *dl, const char *thread_path, const 
             }
             if (thread_id == LIi.id) {
                 Device *d = getDeviceById(device_id, dl);
+                if(d!=NULL){
                 LIi.device_plist.item[LIi.device_plist.length] = d;
                 LIi.device_plist.length++;
+                }
             }
         }
         if (LIi.device_plist.max_length != LIi.device_plist.length) {

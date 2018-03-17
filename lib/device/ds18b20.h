@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "timef.h"
-#include "1w.h"
+#include "../timef.h"
+#include "../1w.h"
 
 #define DS18B20_SCRATCHPAD_BYTE_NUM 8 
 #define DS18B20_EEPROM_BYTE_NUM 3

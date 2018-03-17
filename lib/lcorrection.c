@@ -16,7 +16,7 @@ int initLCorrection(LCorrectionList *list, const char *config_path) {
         TSVclear(r);
         return 1;
     }
-    RESIZE_M_LIST(list, n)
+    RESIZE_M_LIST(list, n);
     if (LML != n) {
 #ifdef MODE_DEBUG
         fprintf(stderr, "%s(): failure while resizing list\n", F);
@@ -24,6 +24,7 @@ int initLCorrection(LCorrectionList *list, const char *config_path) {
         TSVclear(r);
         return 0;
     }
+    NULL_LIST(list);
     for (int i = 0; i < LML; i++) {
         LIi.id = TSVgetis(r, i, "id");
         LIi.factor = TSVgetfs(r, i, "factor");

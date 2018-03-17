@@ -146,7 +146,7 @@ int TSVinit(TSVresult *r, const char *path) {
     FILE* stream = fopen(path, "r");
     if (stream == NULL) {
 #ifdef MODE_DEBUG
-        fprintf(stderr, "%s()", F);
+        fprintf(stderr, "%s(): on file: %s - ", F, path);
         perror("");
 #endif
         return 0;
@@ -163,7 +163,7 @@ int TSVinit(TSVresult *r, const char *path) {
     r->buf = malloc(sz);
     if (r->buf == NULL) {
 #ifdef MODE_DEBUG
-        fprintf(stderr, "%s(): failed to allocate memory for buffer", F);
+        fprintf(stderr, "%s(): failed to allocate memory for buffer: ", F);
         perror("");
 #endif
         fclose(stream);

@@ -123,8 +123,8 @@
     }\
     return NULL;
 
-#define FORL for (i = 0; i < list->length; i++) 
-#define FORLi for (size_t i = 0; i < list->length; i++) 
+#define FORL for (size_t i = 0; i < list->length; i++) 
+#define FORLi FORL
 #define FORMLi for (size_t i = 0; i < list->max_length; i++) 
 #define FORLISTP(V, I) for (size_t I = 0; I < (V)->length; I++) 
 #define FORLISTN(V, I) for (size_t I = 0; I < (V).length; I++) 
