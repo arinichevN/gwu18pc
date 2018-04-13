@@ -26,6 +26,7 @@ typedef struct {
     float cooler_duty_cycle;
     Ton_ts tmr;
     int done;
+    uint32_t *error_code;
 } RegSecure;
 
 DEC_LIST(RegSecure)

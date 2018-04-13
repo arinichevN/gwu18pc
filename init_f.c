@@ -11,6 +11,7 @@ int readSettings(int *sock_port, const char *data_path) {
     }
     char *str = TSVgetvalues(r, 0, "port");
     if (str == NULL) {
+        TSVclear(r);
         return 0;
     }
     *sock_port = atoi(str);

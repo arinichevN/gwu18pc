@@ -2,7 +2,7 @@
 #include "gpio.h"
 
 #ifdef CPU_ALLWINNER_A20
-#include "gpio/allwinner_2.c"
+#include "gpio/allwinner_4.c"
 #else
 #ifdef CPU_ALLWINNER_H3
 #include "gpio/allwinner_2.c"

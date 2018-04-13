@@ -2,6 +2,7 @@
 #include "regpidonfhc.h"
 #include "reg.c"
 #include "regonfhc.h"
+#include "green_light.c"
 
 static void controlEM(RegPIDOnfHCEM *item, float output) {
     if (item->use) {
@@ -13,6 +14,12 @@ static void controlEM(RegPIDOnfHCEM *item, float output) {
 void regpidonfhc_control(RegPIDOnfHC *item) {
     switch (item->state) {
         case REG_INIT:
+            if (!greenLight_isGreen(&item->green_light)) {
+#ifdef MODE_DEBUG
+                fprintf(stdout, "%s(): light is not green\n", F);
+#endif
+                return;
+            }
             if (!acp_readSensorFTS(&item->sensor)) {
 #ifdef MODE_DEBUG
                 puts("reading from sensor failed");

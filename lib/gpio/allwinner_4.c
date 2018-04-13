@@ -1,10 +1,14 @@
 #include "pinout.h"
+//32 and 64 bit
+#define BLOCK_SIZE              (4*1024)
 
-#define PIO_BASE (0x01C20800)
-#define CCU_BASE    (0x01C20000)
-#define MAP_SIZE (4096*2)
-#define MAP_MASK (MAP_SIZE - 1)
-#define BLOCK_SIZE  (4*1024)
+#define SUNXI_GPIO_BASE       (0x01c20800)
+#define SUNXI_GPIO_LM_BASE    (0x01f02c00)
+#define MAP_SIZE           (4096*2)
+#define MAP_MASK           (MAP_SIZE - 1)
+
+#define GPIO_BASE_LM_BP  (0x01f02000)   
+#define GPIO_BASE_BP     (0x01C20000)
 
 
 #define MAP_OFFSET(ADDR) (((ADDR) - ((ADDR) & ~MAP_MASK)) >> 2)
@@ -16,34 +20,18 @@
 extern char *physToGpio[];
 
 static volatile uint32_t *gpio;
+static volatile uint32_t *gpio_lm;
 
 static volatile uint32_t *data_reg [PIN_NUM];
 static volatile uint32_t *cfg_reg [PIN_NUM];
 static volatile uint32_t *pull_reg [PIN_NUM];
 
-int data_offset [PIN_NUM];
-int cfg_offset [PIN_NUM];
-int pull_offset [PIN_NUM];
+static int data_offset [PIN_NUM];
+static int cfg_offset [PIN_NUM];
+static int pull_offset [PIN_NUM];
 
 static int gpio_port[PIN_NUM];
 static int gpio_index[PIN_NUM];
-
-static void parse_pin(int *port, int *pin, const char *name) {
-    if (strlen(name) < 3) {
-        goto failed;
-    }
-    if (*name == 'P') {
-        name++;
-    } else {
-        goto failed;
-    }
-    *port = *name++ -'A';
-    *pin = atoi(name);
-    return;
-failed:
-    *port = -1;
-    *pin = -1;
-}
 
 void pinWrite(int pin, int value) {
     static uint32_t regval = 0;
@@ -102,37 +90,6 @@ void pinPUD(int pin, int pud) {
     delayUsIdle(1);
 }
 
-static void makeData() {
-    for (int i = 0; i < PIN_NUM; i++) {
-        parse_pin(gpio_port + i, gpio_index + i, physToGpio[i]);
-    }
-    for (int i = 0; i < PIN_NUM; i++) {
-        int sub = (gpio_index[i] >> 4);
-        int sub_index = gpio_index[i] - 16 * sub;
-        uint32_t data_phyaddr = PIO_BASE + (gpio_port[i] * 36) + 0x10;
-        uint32_t cfg_phyaddr = PIO_BASE + (gpio_port[i] * 36) + ((gpio_index[i] >> 3) << 2);
-        uint32_t pull_phyaddr = PIO_BASE + (gpio_port[i] * 36) + 0x1c + sub * 4;
-        data_reg[i] = gpio + MAP_OFFSET(data_phyaddr);
-        data_offset[i] = gpio_index[i];
-        cfg_reg[i] = gpio + MAP_OFFSET(cfg_phyaddr);
-        cfg_offset[i] = ((gpio_index[i] - ((gpio_index[i] >> 3) << 3)) << 2);
-        pull_reg[i] = gpio + MAP_OFFSET(pull_phyaddr);
-        pull_offset[i] = sub_index << 1;
-
-    }
-
-    /*
-        for (i = 0; i < 27; i++) {
-            printf("%x", data_reg[i] - gpio);
-            if (i % 2 == 0) {
-                putchar('\n');
-            } else {
-                putchar('\t');
-            }
-        }
-     */
-}
-
 int checkPin(int pin) {
     if (pin < 0 || pin >= PIN_NUM) {
         return 0;
@@ -146,6 +103,52 @@ int checkPin(int pin) {
     return 1;
 }
 
+static void parse_pin(int *port, int *pin, const char *name) {
+    if (strlen(name) < 3) {
+        goto failed;
+    }
+    if (*name == 'P') {
+        name++;
+    } else {
+        goto failed;
+    }
+    *port = *name++ -'A';
+    *pin = atoi(name);
+    return;
+failed:
+    *port = -1;
+    *pin = -1;
+}
+
+static void makeData() {
+    for (int i = 0; i < PIN_NUM; i++) {
+        parse_pin(gpio_port + i, gpio_index + i, physToGpio[i]);
+    }
+    for (int i = 0; i < PIN_NUM; i++) {
+        int sub = (gpio_index[i] >> 4);
+        int sub_index = gpio_index[i] - 16 * sub;
+        if (gpio_port[i] == 11){
+			uint32_t data_phyaddr = SUNXI_GPIO_LM_BASE + ((gpio_port[i] - 11) * 36) + 0x10;
+			uint32_t cfg_phyaddr = SUNXI_GPIO_LM_BASE + ((gpio_port[i] - 11) * 36) + ((gpio_index[i] >> 3) << 2);
+			uint32_t pull_phyaddr = SUNXI_GPIO_LM_BASE + ((gpio_port[i] - 11) * 36) + 0x1c + sub * 4;
+			data_reg[i] = gpio_lm + MAP_OFFSET(data_phyaddr);
+			cfg_reg[i] = gpio_lm + MAP_OFFSET(cfg_phyaddr);
+			pull_reg[i] = gpio_lm + MAP_OFFSET(pull_phyaddr);
+		}else{
+			uint32_t data_phyaddr = SUNXI_GPIO_BASE + (gpio_port[i] * 36) + 0x10;
+			uint32_t cfg_phyaddr = SUNXI_GPIO_BASE + (gpio_port[i] * 36) + ((gpio_index[i] >> 3) << 2);
+			uint32_t pull_phyaddr = SUNXI_GPIO_BASE + (gpio_port[i] * 36) + 0x1c + sub * 4;
+			data_reg[i] = gpio + MAP_OFFSET(data_phyaddr);
+			cfg_reg[i] = gpio + MAP_OFFSET(cfg_phyaddr);
+			pull_reg[i] = gpio + MAP_OFFSET(pull_phyaddr);
+		}
+        data_offset[i] = gpio_index[i];
+        cfg_offset[i] = ((gpio_index[i] - ((gpio_index[i] >> 3) << 3)) << 2);
+        pull_offset[i] = sub_index << 1;
+
+    }
+}
+
 int gpioSetup() {
     int fd;
     if ((fd = open("/dev/mem", O_RDWR | O_SYNC | O_CLOEXEC)) < 0) {
@@ -153,9 +156,10 @@ int gpioSetup() {
         perror("open()");
         return 0;
     }
-    gpio =  mmap(0, BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, CCU_BASE);
+    gpio_lm =  mmap(0, BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, GPIO_BASE_LM_BP);
+    gpio =  mmap(0, BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, GPIO_BASE_BP);
     close(fd);
-    if (gpio == MAP_FAILED) {
+    if (( gpio == MAP_FAILED) || ( gpio_lm == MAP_FAILED)) {
         fprintf(stderr, "%s(): ", __func__);
         perror("mmap()");
         return 0;

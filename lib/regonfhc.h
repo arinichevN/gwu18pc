@@ -4,6 +4,7 @@
 #include "timef.h"
 #include "acp/main.h"
 #include "reg.h"
+#include "green_light.h"
 
 typedef struct {
     EM em;
@@ -20,6 +21,7 @@ typedef struct {
     float goal;
     struct timespec change_gap;
     RegSecure secure_out;
+    GreenLight green_light;
     
     char state;
     char state_r;

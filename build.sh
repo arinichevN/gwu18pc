@@ -94,6 +94,12 @@ function full_nc {
 	build $MODE_DEBUG $APP_DBG $MODE_FULL  && \
 	move_bin && move_bin_dbg
 }
+function full_na {
+	DEBUG_PARAM=$NONE
+	build $NONE $APP $MODE_FULL && \
+	build $MODE_DEBUG $APP_DBG $MODE_FULL && \
+	move_bin && move_bin_dbg && move_conf
+}
 function part_debug {
 	build $MODE_DEBUG $APP_DBG $NONE
 }

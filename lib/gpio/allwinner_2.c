@@ -1,5 +1,5 @@
 #include "pinout.h"
-
+//32 and 64 bit
 #define BLOCK_SIZE              (4*1024)
 
 #define SUNXI_GPIO_BASE       (0x01c20800)

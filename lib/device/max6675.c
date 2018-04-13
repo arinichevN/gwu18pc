@@ -20,7 +20,7 @@ int max6675_init(int sclk, int cs, int miso) {
 }
 
 int max6675_read(float *result, int sclk, int cs, int miso) {
-    uint16_t v;
+    uint16_t v=0;
     pinLow(cs);
     delayUsBusy(1000);
     {

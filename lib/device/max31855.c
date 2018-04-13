@@ -27,7 +27,7 @@ static void printInt32(uint32_t d) {
 #define DELAY 1000
 
 int max31855_read(float *result, int sclk, int cs, int miso) {
-    uint32_t v;
+    uint32_t v=0;
     pinLow(cs);
     delayUsBusy(DELAY);
     {

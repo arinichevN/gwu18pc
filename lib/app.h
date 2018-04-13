@@ -27,11 +27,29 @@
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 
+#define GOOD_FLOAT 1.0
+#define BAD_FLOAT 0.0
+#define GOOD_INT 1
+#define BAD_INT 0
+
+#define POSITIVE_FLOAT GOOD_FLOAT
+#define NEGATIVE_FLOAT BAD_FLOAT
+#define POSITIVE_INT GOOD_INT
+#define NEGATIVE_INT BAD_INT
+
 #define DEF_THREAD pthread_t thread;char thread_cmd=0;void *threadFunction(void *arg);
 #define THREAD_CREATE createThread(&thread,&threadFunction,&thread_cmd)
 #define THREAD_STOP thread_cmd = 1;pthread_join(thread, NULL);
 #define THREAD_EXIT_ON_CMD if (*cmd) {*cmd = 0;return (EXIT_SUCCESS); }
 #define THREAD_DEF_CMD char *cmd = (char *) arg;
+
+#define PROG_ERROR_NO_SIGNAL_FROM_CLIENT 0x1
+#define PROG_ERROR_NO_RESPONSE_FROM_SENSOR 0x2
+#define PROG_ERROR_HARDWARE 0x4
+
+#define BIT_ENABLE(buf,v) (buf)|=(v)
+#define BIT_DISABLE(buf,v) (buf)&=~(v)
+#define BIT_IS_ENABLED(buf,v) (buf)&(v)
 
 #define SERVER_HEADER \
     ACPResponse response;ACPRequest request;\
@@ -76,10 +94,10 @@
 #define DEF_SERVER_S2LIST S2 s2_arr[request.data_rows_count];S2List s2l;s2l.item=s2_arr;s2l.max_length=request.data_rows_count;s2l.length=0;
 #define DEF_SERVER_I1S1LIST I1S1 i1s1_arr[request.data_rows_count];I1S1List i1s1l;i1s1l.item=i1s1_arr;i1s1l.max_length=request.data_rows_count;i1s1l.length=0;
 
-#define SERVER_PARSE_I1LIST acp_requestDataToI1List(&request, &i1l);if (i1l.length <= 0) {return;}
-#define SERVER_PARSE_I1F1LIST acp_requestDataToI1F1List(&request, &i1f1l);if (i1f1l.length <= 0) {return;}
-#define SERVER_PARSE_I2LIST acp_requestDataToI2List(&request, &i2l);if (i2l.length <= 0) {return;}
-#define SERVER_PARSE_I1S1LIST acp_requestDataToI1S1List(&request, &i1s1l);if (i1s1l.length <= 0) {return;}
+#define SERVER_PARSE_I1LIST acp_requestDataToI1List(&request, &i1l);if (i1l.length <= 0)return;
+#define SERVER_PARSE_I1F1LIST acp_requestDataToI1F1List(&request, &i1f1l);if (i1f1l.length <= 0)return;
+#define SERVER_PARSE_I2LIST acp_requestDataToI2List(&request, &i2l);if (i2l.length <= 0)return;
+#define SERVER_PARSE_I1S1LIST acp_requestDataToI1S1List(&request, &i1s1l);if (i1s1l.length <= 0)return;
 
 #define SEND_STR(V) acp_responseSendStr(V, ACP_MIDDLE_PACK, response, &peer_client);
 #define SEND_STR_L(V) acp_responseSendStr(V, ACP_LAST_PACK, response, &peer_client);
@@ -88,16 +106,14 @@
 #define SEND_STR_L_P(V) acp_responseSendStr(V, ACP_LAST_PACK, &response, &peer_client);
 
 #define LIST_GET_BY_ID \
-     int i;\
-    for (i = 0; i < list->length; i++) {\
+    for (int i = 0; i < list->length; i++) {\
         if (list->item[i].id == id) {\
             return &(list->item[i]);\
         }\
     }\
     return NULL;
 #define LIST_GET_BY_IDSTR \
-     int i;\
-    for (i = 0; i < list->length; i++) {\
+    for (int i = 0; i < list->length; i++) {\
         if (strcmp(list->item[i].id, id)==0) {\
             return &(list->item[i]);\
         }\
@@ -115,16 +131,15 @@
     return NULL;
 
 #define LIST_GET_BY(V) \
-     int i;\
-    for (i = 0; i < list->length; i++) {\
+    for (int i = 0; i < list->length; i++) {\
         if (list->item[i].V == id) {\
             return &(list->item[i]);\
         }\
     }\
     return NULL;
 
-#define FORL for (size_t i = 0; i < list->length; i++) 
-#define FORLi FORL
+#define FORLi for (size_t i = 0; i < list->length; i++) 
+#define FORL FORLi
 #define FORMLi for (size_t i = 0; i < list->max_length; i++) 
 #define FORLISTP(V, I) for (size_t I = 0; I < (V)->length; I++) 
 #define FORLISTN(V, I) for (size_t I = 0; I < (V).length; I++) 
@@ -157,6 +172,20 @@ enum {
     APP_EXIT
 } State;
 
+typedef struct {
+    char *buf;
+    size_t *s1_offset;
+    size_t buf_length;
+    size_t buf_max_length;
+    size_t length;
+    size_t max_length;
+} S1BList;
+#define BLIST_ITEM(list,iname, ind)  ((list)->buf+(list)->iname##_offset[ind])
+#define S1BLIST_INITIALIZER {.buf=NULL, .s1_offset=NULL, .buf_length=0, .buf_max_length=0, .length=0, .max_length=0}
+#define FREE_S1BLIST(list) free((list)->s1_offset); free((list)->buf);  (list)->buf=NULL; (list)->s1_offset=NULL; (list)->buf_length=0;(list)->buf_max_length=0;(list)->length=0; (list)->max_length=0;
+#define NULL_S1BLIST(list) memset((list)->buf,0,(list)->buf_max_length * sizeof (*(list)->buf));memset((list)->s1_offset,0,(list)->max_length * sizeof (*(list)->s1_offset));(list)->buf_length=0;(list)->length=0;
+
+extern int s1blist_push(size_t min_buf_alloc_length, size_t min_item_alloc_length, S1BList *list, const char *str);
 
 typedef struct {
     pthread_mutex_t self;

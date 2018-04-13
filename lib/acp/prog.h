@@ -13,6 +13,7 @@
 #define ACP_CMD_PROG_GET_DATA "pgd"
 #define ACP_CMD_PROG_GET_ENABLED "pgenl"
 #define ACP_CMD_PROG_SET_SAVE "pssave"
+#define ACP_CMD_PROG_GET_ERROR "pgerr"
 
 #endif
 
