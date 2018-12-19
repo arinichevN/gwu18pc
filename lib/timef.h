@@ -19,6 +19,8 @@
 #define WDAY_NUM 7
 //CLOCK_PROCESS_CPUTIME_ID
 
+#define timespec2double(d, ts) d=(ts)->tv_sec + (double) (ts)->tv_nsec*NANO_FACTOR
+#define double2timespec(ts, d)  (ts)->tv_sec = d; (ts)->tv_nsec = ( d - (long int ) d ) / NANO_FACTOR;
 #define usec2timespec(us, ts)             \
   (ts)->tv_sec = (time_t) (us / 1000000);            \
   (ts)->tv_nsec = (long) (us % 1000000) * 1000;
@@ -48,7 +50,7 @@
       (result)->tv_nsec += 1000000000;           \
     }               \
   } while (0)
-#define timespecclear(tvp) ((tvp)->tv_sec = (tvp)->tv_nsec = 0)
+#define timespecclear(tvp) ((tvp)->tv_sec = (tvp)->tv_nsec = 0L)
 
 typedef struct {
     int month;
@@ -72,6 +74,8 @@ typedef struct {
 extern struct timespec getCurrentTime();
 
 extern void delayUsBusy(unsigned int td);
+
+extern void delayTsBusy(struct timespec interval);
 
 extern void delayUsBusyC(unsigned int td);
 

@@ -248,7 +248,7 @@ char * strcpyma(char **dest, char *src) {
         *dest = NULL;
         fprintf(stderr, "%s(): ", __func__);
         perror("calloc()");
-        return NULL;
+       return *dest;
     }
     strncpy(p, src, n);
     *dest = p;

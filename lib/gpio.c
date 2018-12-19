@@ -2,13 +2,16 @@
 #include "gpio.h"
 
 #ifdef CPU_ALLWINNER_A20
-#include "gpio/allwinner_4.c"
+//#include "gpio/allwinner_4.c"
+#include "gpio/allwinner_5.c"
 #else
 #ifdef CPU_ALLWINNER_H3
-#include "gpio/allwinner_2.c"
+//#include "gpio/allwinner_2.c"
+#include "gpio/allwinner_5.c"
 #else
 #ifdef CPU_ALLWINNER_H2P
-#include "gpio/allwinner_2.c"
+//#include "gpio/allwinner_2.c"
+#include "gpio/allwinner_5.c"
 #else
 #ifdef CPU_ALLWINNER_H5
 #include "gpio/allwinner_2.c"

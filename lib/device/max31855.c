@@ -33,12 +33,12 @@ int max31855_read(float *result, int sclk, int cs, int miso) {
     {
         int i;
         for (i = 31; i >= 0; i--) {
-            pinHigh(sclk);
+            pinLow(sclk);
             delayUsBusy(DELAY);
             if (pinRead(miso)) {
                 v |= (1 << i);
             }
-            pinLow(sclk);
+            pinHigh(sclk);
             delayUsBusy(DELAY);
         }
     }

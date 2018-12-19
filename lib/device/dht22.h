@@ -7,7 +7,7 @@
 #include "../timef.h"
 #include "../gpio.h"
 
-extern int dht22_read(int pin, float *t, float *h);
+extern int dht22_read(int pin, double *t, double *h);
 
 #endif
 

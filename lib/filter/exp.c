@@ -1,9 +1,7 @@
 #include "exp.h"
 
-FUN_LIST_GET_BY_ID(FilterEXP)
-
-int fexp_init(FilterEXP *item, int id, float a) {
-    if (a < 0.0f || a > 1.0f) {
+int fexp_init(FilterEXP *item, int id, double a) {
+    if (a < 0.0 || a > 1.0) {
         return 0;
     }
     item->id = id;
@@ -37,7 +35,7 @@ int fexp_initList(FilterEXPList *list, const char *config_path) {
     for (int i = 0; i < LML; i++) {
         LIi.id = TSVgetis(r, i, "id");
         LIi.a = TSVgetfs(r, i, "a");
-        if (LIi.a < 0.0f || LIi.a > 1.0f) {
+        if (LIi.a < 0.0 || LIi.a > 1.0) {
 #ifdef MODE_DEBUG
             fprintf(stderr, "%s(): 0 >= a <= 1 expected where id=%d\n", F, LIi.id);
 #endif
@@ -60,19 +58,19 @@ int fexp_initList(FilterEXPList *list, const char *config_path) {
     return 1;
 }
 
-void fexp_calc(float *v, void *filter) {
+void fexp_calc(double *v, void *filter) {
     FilterEXP *item=filter;
     if (!item->f) {
         item->f = 1;
         return;
     }
-    *v = item->a * item->vp + (1.0f - item->a)*(*v);
+    *v = item->a * item->vp + (1.0 - item->a)*(*v);
     item->vp = *v;
 }
 
 void fexp_free(FilterEXP *item) {
-    item->vp = 0.0f;
-    item->a = 0.0f;
+    item->vp = 0.0;
+    item->a = 0.0;
 }
 
 void fexp_freeList(FilterEXPList *list) {

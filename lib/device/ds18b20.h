@@ -21,7 +21,7 @@
 #define DS18B20_CMD_COPY_SCRATCHPAD 0x48
 #define DS18B20_CMD_RECALL 0xB8
 
-extern float dsToFloat(uint16_t v) ;
+extern double dsToFloat(uint16_t v) ;
 
 extern int ds18b20_read_scratchpad(int pin, const uint8_t *addr, uint8_t *sp) ;
 
@@ -41,9 +41,9 @@ extern int ds18b20_convert_t(int pin, const uint8_t *addr) ;
 
 extern int ds18b20_convert_t_all(int pin);
 
-extern int ds18b20_read_temp(int pin, const uint8_t *addr, float * temp);
+extern int ds18b20_read_temp(int pin, const uint8_t *addr, double * temp);
 
-extern int ds18b20_get_temp(int pin, const uint8_t *addr, float * temp) ;
+extern int ds18b20_get_temp(int pin, const uint8_t *addr, double * temp) ;
 
 extern int ds18b20_parse_resolution(int r) ;
 

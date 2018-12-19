@@ -9,10 +9,10 @@
 #PINOUT=-DPINOUT1
 
 #orange pi pc
-PINOUT=-DPINOUT3
+#PINOUT=-DPINOUT3
 
 #banana pi m1, banana pi m1+
-#PINOUT=-DPINOUT4
+PINOUT=-DPINOUT4
 
 #banana pi m2
 #PINOUT=-DPINOUT5

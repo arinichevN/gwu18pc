@@ -2,4 +2,5 @@
 /nbproject/
 /*.autosave
 /*_dbg
-/massif.out.*
+/*.kdev4
+

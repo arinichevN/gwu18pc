@@ -13,7 +13,7 @@
 #define PID_TUNE_NOISE 1.0f
 #define PID_TUNE_STEP 50.0f
 #define PID_TUNE_LOOP_BACK 20
-#define NANO_FACTOR 0.000000001
+
 
 
 

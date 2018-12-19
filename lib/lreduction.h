@@ -8,18 +8,17 @@
 
 typedef struct {
     int id;
-    float min_in;
-    float max_in;
-    float min_out;
-    float max_out;
+    double min_in;
+    double max_in;
+    double min_out;
+    double max_out;
 } LReduction;
 
 DEC_LIST(LReduction)
-DEC_FUN_LIST_GET_BY_ID(LReduction)
 
 extern int initLReduction(LReductionList *list, const char *config_path);
 
-extern void lreduct(float *out, LReduction *x);
+extern void lreduct(double *out, LReduction *x);
 
 #endif
 

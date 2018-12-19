@@ -168,8 +168,17 @@ int gpioSetup() {
     return 1;
 }
 
-int gpioFree() {
-    return 1;
+void gpioFree() {
+    	if(gpio !=NULL && gpio!=MAP_FAILED){
+		if(munmap((void*)gpio, BLOCK_SIZE)!=0){
+			perrord("munmap()");
+		}
+	}
+	    	if(gpio_lm !=NULL && gpio_lm!=MAP_FAILED){
+		if(munmap((void*)gpio_lm, BLOCK_SIZE)!=0){
+			perrord("munmap()");
+		}
+	}
 }
 
 

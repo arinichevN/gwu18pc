@@ -403,6 +403,15 @@ int gpioSetup() {
     return 1;
 }
 
-int gpioFree() {
-    return 1;
+void gpioFree() {
+    if(grf !=NULL && grf!=MAP_FAILED){
+		if(munmap((void*)grf, PAGE_SIZE)!=0){
+			perrord("munmap()");
+		}
+	}
+    if(pmu !=NULL && pmu!=MAP_FAILED){
+		if(munmap((void*)pmu, PAGE_SIZE)!=0){
+			perrord("munmap()");
+		}
+	}
 }

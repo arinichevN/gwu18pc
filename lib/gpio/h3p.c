@@ -221,7 +221,7 @@ int gpioSetup() {
         perror("open()");
         return 0;
     }
-    base =  mmap(0, 1024, PROT_READ | PROT_WRITE, MAP_SHARED, fd, PIO_BASE);
+    base =  mmap(0, BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, PIO_BASE);
     close(fd);
     if (base == MAP_FAILED) {
        fprintf(stderr, "%s(): ", __func__);
@@ -232,8 +232,12 @@ int gpioSetup() {
     return 1;
 }
 
-int gpioFree() {
-    return 1;
+void gpioFree() {
+     if(base !=NULL && base!=MAP_FAILED){
+		if(munmap((void*)base, BLOCK_SIZE)!=0){
+			perrord("munmap()");
+		}
+	}
 }
 
 

@@ -6,7 +6,7 @@ int sock_fd = -1;
 
 Peer peer_client = {.fd = &sock_fd, .addr_size = sizeof peer_client.addr};
 
-DeviceList device_list = LIST_INITIALIZER;
+ChannelList channel_list = LIST_INITIALIZER;
 LCorrectionList lcorrection_list = LIST_INITIALIZER;
 ThreadList thread_list = LIST_INITIALIZER;
 
@@ -19,20 +19,12 @@ void serverRun(int *state, int init_state) {
     SERVER_APP_ACTIONS
     DEF_SERVER_I1LIST
     if (ACP_CMD_IS(ACP_CMD_GET_FTS)) {
-        acp_requestDataToI1List(&request, &i1l);
-        if (i1l.length <= 0) {
-            return;
-        }
-        for (int i = 0; i < i1l.length; i++) {
-            Device *item = getDeviceById(i1l.item[i], &device_list);
-            if (item != NULL) {
-                if (lockMutex(&item->mutex)) {
-                    if (!catFTS(item, &response)) {
-                        return;
-                    }
-                    unlockMutex(&item->mutex);
-                }
-            }
+		SERVER_PARSE_I1LIST
+        FORLISTN(i1l, i) {
+            Channel *item;
+            LIST_GETBYID(item, &channel_list, i1l.item[i]);
+            if ( item == NULL ) continue;
+            if ( !catFTS ( item, &response ) ) return;
         }
     }
     acp_responseSend(&response, &peer_client);
@@ -56,20 +48,19 @@ void *threadFunction(void *arg) {
 #define UPLL UPL.length
 #define UPLIi UPL.item[i]
 
-#define DPL item->device_plist
-#define DPLL DPL.length
-#define DPLIi DPL.item[i]
+#define CPL item->channel_plist
+#define CPLL CPL.length
+#define CPLIi CPL.item[i]
+#define CPLIiD CPLIi->device
 
 #ifndef CPU_ANY
     for (size_t i = 0; i < UPLL; i++) {
         pinPUD(UPLIi, PUD_OFF);
         pinModeOut(UPLIi);
     }
-    for (size_t i = 0; i < DPLL; i++) {
-        if (!setResolution(DPLIi)) {
-#ifdef MODE_DEBUG
-            fprintf(stderr, "%s(): failed to set resolution for device with id=%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx\n", F, DPLIi->address[0], DPLIi->address[1], DPLIi->address[2], DPLIi->address[3], DPLIi->address[4], DPLIi->address[5], DPLIi->address[6], DPLIi->address[7]);
-#endif
+    for (size_t i = 0; i < CPLL; i++) {
+        if (!setResolution(&CPLIi->device)) {
+            printde("failed to set resolution for device with id=%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx\n", CPLIiD.address[0], CPLIiD.address[1], CPLIiD.address[2], CPLIiD.address[3], CPLIiD.address[4], CPLIiD.address[5], CPLIiD.address[6], CPLIiD.address[7]);
         }
     }
 #endif
@@ -84,8 +75,8 @@ void *threadFunction(void *arg) {
             for (int i = 0; i < UPLL; i++) {
                 ds18b20_wait_convertion(UPLIi);
             }
-            for (int i = 0; i < DPLL; i++) {
-                deviceRead(DPLIi);
+            for (int i = 0; i < CPLL; i++) {
+                channelRead(CPLIi);
             }
 #endif
             threadSetCancelState(old_state);
@@ -100,38 +91,44 @@ void *threadFunction(void *arg) {
 #undef UPLL 
 #undef UPLIi 
 
-#undef DPL 
-#undef DPLL
-#undef DPLIi 
+#undef CPL 
+#undef CPLL
+#undef CPLIi 
+#undef CPLIiD
 }
 
-void initApp() {
+int initApp() {
     if (!readSettings(&sock_port, CONF_MAIN_FILE)) {
-        exit_nicely_e("initApp: failed to read configuration file\n");
+        putsde("failed to read settings\n");
+        return 0;
     }
     if (!initServer(&sock_fd, sock_port)) {
-        exit_nicely_e("initApp: failed to initialize server\n");
+        putsde("failed to initialize socket server\n");
+        return 0;
     }
     if (!gpioSetup()) {
-        exit_nicely_e("initApp: failed to initialize GPIO\n");
+        freeSocketFd(&sock_fd);
+        putsde("failed to initialize GPIO\n");
+        return 0;
     }
+    return 1;
 }
 
 int initData() {
     initLCorrection(&lcorrection_list, CONF_LCORRECTION_FILE);
-    if (!initDevice(&device_list, &lcorrection_list, CONF_DEVICE_FILE)) {
-        freeDeviceList(&device_list);
+    if (!initChannel(&channel_list, &lcorrection_list, CONF_CHANNEL_FILE)) {
+        freeChannelList(&channel_list);
         FREE_LIST(&lcorrection_list);
         return 0;
     }
-    if (!checkDevice(&device_list)) {
-        freeDeviceList(&device_list);
+    if (!checkChannel(&channel_list)) {
+        freeChannelList(&channel_list);
         FREE_LIST(&lcorrection_list);
         return 0;
     }
-    if (!initThread(&thread_list, &device_list, CONF_THREAD_FILE, CONF_THREAD_DEVICE_FILE)) {
+    if (!initThread(&thread_list, &channel_list, CONF_THREAD_FILE, CONF_THREAD_CHANNEL_FILE)) {
         freeThreadList(&thread_list);
-        FREE_LIST(&device_list);
+        FREE_LIST(&channel_list);
         FREE_LIST(&lcorrection_list);
         return 0;
     }
@@ -140,9 +137,9 @@ int initData() {
 }
 
 void freeData() {
-    stopAllThreads(&thread_list);
+    STOP_ALL_LIST_THREADS(&thread_list);
     freeThreadList(&thread_list);
-    FREE_LIST(&device_list);
+    FREE_LIST(&channel_list);
     FREE_LIST(&lcorrection_list);
 }
 
@@ -152,23 +149,15 @@ void freeApp() {
     gpioFree();
 }
 
-void exit_nicely() {
+void exit_nicely ( ) {
     freeApp();
-    puts("\nBye...");
-    exit(EXIT_SUCCESS);
-}
-
-void exit_nicely_e(char *s) {
-    fprintf(stderr, "%s", s);
-    freeApp();
-    exit(EXIT_FAILURE);
+    putsdo ( "\nexiting now...\n" );
+    exit ( EXIT_SUCCESS );
 }
 
 int main(int argc, char** argv) {
     if (geteuid() != 0) {
-#ifdef MODE_DEBUG
-        fprintf(stderr, "%s: root user expected\n", APP_NAME_STR);
-#endif
+		putsde("root user expected\n");
         return (EXIT_FAILURE);
     }
 #ifndef MODE_DEBUG
@@ -176,7 +165,7 @@ int main(int argc, char** argv) {
 #endif
     conSig(&exit_nicely);
     if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1) {
-        perror("main: memory locking failed");
+        perrorl ( "mlockall()" );
     }
 #ifndef MODE_DEBUG
     setPriorityMax(SCHED_FIFO);
@@ -188,7 +177,9 @@ int main(int argc, char** argv) {
 #endif
         switch (app_state) {
             case APP_INIT:
-                initApp();
+                if ( !initApp() ) {
+                  return ( EXIT_FAILURE );
+                }
                 app_state = APP_INIT_DATA;
                 break;
             case APP_INIT_DATA:
@@ -212,8 +203,9 @@ int main(int argc, char** argv) {
                 exit_nicely();
                 break;
             default:
-                exit_nicely_e("main: unknown application state");
-                break;
+                freeApp();
+                putsde ( "unknown application state\n" );
+                return ( EXIT_FAILURE );
         }
     }
     freeApp();

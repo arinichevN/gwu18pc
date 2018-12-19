@@ -45,7 +45,7 @@ extern void pinModeOut(int pin);
 extern void pinPUD(int pin, int pud);
 extern int checkPin(int pin);
 extern int gpioSetup();
-extern int gpioFree();
+extern void gpioFree();
 
 
 #endif 

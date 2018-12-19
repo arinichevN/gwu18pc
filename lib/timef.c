@@ -6,6 +6,15 @@ struct timespec getCurrentTime() {
     return now;
 }
 
+void delayTsBusy(struct timespec interval) {
+    struct timespec now, end;
+    clock_gettime(LIB_CLOCK, &now);
+    timespecadd(&now, &interval, &end);
+    while (timespeccmp(&now, &end, <)) {
+        clock_gettime(LIB_CLOCK, &now);
+    }
+}
+
 void delayUsBusy(unsigned int td) {
     struct timespec now, interval, end;
     clock_gettime(LIB_CLOCK, &now);

@@ -25,6 +25,9 @@ int db_openR(const char *path, sqlite3 **db) {
     return 1;
 }
 
+void db_close(sqlite3 *db){
+	sqlite3_close_v2(db);
+}
 int db_exec(sqlite3 *db, char *q, int (*callback)(void*, int, char**, char**), void * data) {
     char *errMsg = 0;
     int rc = sqlite3_exec(db, q, callback, data, &errMsg);

@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <stdint.h>
 
 #include "common.h"
 #include "acp/app.h"
@@ -50,6 +51,27 @@
 #define BIT_ENABLE(buf,v) (buf)|=(v)
 #define BIT_DISABLE(buf,v) (buf)&=~(v)
 #define BIT_IS_ENABLED(buf,v) (buf)&(v)
+
+#define FORLi for (size_t i = 0; i < list->length; i++) 
+#define FORL FORLi
+#define FORMLi for (size_t i = 0; i < list->max_length; i++) 
+#define FORLISTP(V, I) for (size_t I = 0; I < (V)->length; I++) 
+#define FORLISTN(V, I) for (size_t I = 0; I < (V).length; I++) 
+#define FORLIST(I) for (size_t I = 0; I < list->length; I++) 
+#define FORLLj  for (size_t j = i + 1; j < list->length; j++) 
+#define FORLISTPL(V, I, J)  for (size_t J = i + 1; J < (V)->length; J++) 
+
+#define FOREACH_CHANNEL FOREACH_LLIST(item,&channel_list,Channel)
+
+#define LI(L,I) (L)->item[I]
+#define LIi LI(list,i)
+#define LIj LI(list,j)
+#define LIll list->item[list->length]
+#define Lil list->length-1
+#define LL list->length
+#define LML list->max_length
+#define LIiei(v) LIi.v=atoi(v)
+#define LIief(v) LIi.v=atof(v)
 
 #define SERVER_HEADER \
     ACPResponse response;ACPRequest request;\
@@ -105,55 +127,24 @@
 #define SEND_STR_P(V) acp_responseSendStr(V, ACP_MIDDLE_PACK, &response, &peer_client);
 #define SEND_STR_L_P(V) acp_responseSendStr(V, ACP_LAST_PACK, &response, &peer_client);
 
-#define LIST_GET_BY_ID \
-    for (int i = 0; i < list->length; i++) {\
-        if (list->item[i].id == id) {\
-            return &(list->item[i]);\
-        }\
-    }\
-    return NULL;
-#define LIST_GET_BY_IDSTR \
-    for (int i = 0; i < list->length; i++) {\
-        if (strcmp(list->item[i].id, id)==0) {\
-            return &(list->item[i]);\
-        }\
-    }\
-    return NULL;
+#ifdef MODE_DEBUG
+#define STOP_CHANNEL_THREAD(channel) {printf("signaling thread %d to cancel...\n", (channel)->id);if (pthread_cancel((channel)->thread) != 0)perror("pthread_cancel()");void * App_result;printf("joining thread %d...\n", (channel)->id);if (pthread_join((channel)->thread, &App_result) != 0) perror("pthread_join()");if (App_result != PTHREAD_CANCELED) printf("thread %d not canceled\n", (channel)->id);}
+#else
+#define STOP_CHANNEL_THREAD(channel) {pthread_cancel((channel)->thread);void * App_result;pthread_join((channel)->thread, &App_result);}
+#endif
 
-#define LLIST_GET_BY_ID(T) \
-    T *curr = list->top;\
-    while(curr!=NULL){\
-        if(curr->id==id){\
-            return curr;\
-        }\
-        curr=curr->next;\
-    }\
-    return NULL;
+#ifdef MODE_DEBUG
+#define STOP_ALL_LLIST_THREADS(list, T) {FOREACH_LLIST(item,(list),T){printf("signaling thread %d to cancel...\n", item->id);if (pthread_cancel(item->thread) != 0) perror("pthread_cancel()");}FOREACH_LLIST(item,list,T){void * App_result;printf("joining thread %d...\n", item->id);if (pthread_join(item->thread, &App_result) != 0) perror("pthread_join()");if (App_result != PTHREAD_CANCELED) printf("thread %d not canceled\n", item->id);}}
+#else
+#define STOP_ALL_LLIST_THREADS(list, T) {FOREACH_LLIST(item,(list),T){pthread_cancel(item->thread);}FOREACH_LLIST(item,list,T){void * App_result;pthread_join(item->thread, &App_result);}}
+#endif
+#define STOP_ALL_CHANNEL_THREADS(channel_list) STOP_ALL_LLIST_THREADS(channel_list, Channel)
 
-#define LIST_GET_BY(V) \
-    for (int i = 0; i < list->length; i++) {\
-        if (list->item[i].V == id) {\
-            return &(list->item[i]);\
-        }\
-    }\
-    return NULL;
-
-#define FORLi for (size_t i = 0; i < list->length; i++) 
-#define FORL FORLi
-#define FORMLi for (size_t i = 0; i < list->max_length; i++) 
-#define FORLISTP(V, I) for (size_t I = 0; I < (V)->length; I++) 
-#define FORLISTN(V, I) for (size_t I = 0; I < (V).length; I++) 
-#define FORLIST(I) for (size_t I = 0; I < list->length; I++) 
-#define FORLLj  for (size_t j = i + 1; j < list->length; j++) 
-#define FORLISTPL(V, I, J)  for (size_t J = i + 1; J < (V)->length; J++) 
-#define LIi list->item[i]
-#define LIj list->item[j]
-#define LIll list->item[list->length]
-#define Lil list->length-1
-#define LL list->length
-#define LML list->max_length
-#define LIiei(v) LIi.v=atoi(v)
-#define LIief(v) LIi.v=atof(v)
+#ifdef MODE_DEBUG
+#define STOP_ALL_LIST_THREADS(list) FORLISTP(list, i){printf("signaling thread %d to cancel...\n", (list)->item[i].id);if (pthread_cancel((list)->item[i].thread) != 0) perror("pthread_cancel()");}FORLISTP(list, i){void * App_result;printf("joining thread %d...\n", (list)->item[i].id);if (pthread_join((list)->item[i].thread, &App_result) != 0) perror("pthread_join()");if (App_result != PTHREAD_CANCELED) printf("thread %d not canceled\n", (list)->item[i].id);}
+#else
+#define STOP_ALL_LIST_THREADS(list) FORLISTP(list, i){pthread_cancel((list)->item[i].thread);} FORLISTP(list, i){void * result;pthread_join((list)->item[i].thread, &result);}
+#endif
 
 #define FUN_LOCK(T) int lock ## T (T *item) {if (item == NULL) {return 0;} if (pthread_mutex_lock(&(item->mutex.self)) != 0) {return 0;}return 1;}
 #define FUN_TRYLOCK(T) int tryLock ## T (T  *item) {if (item == NULL) {return 0;} if (pthread_mutex_trylock(&(item->mutex.self)) != 0) {return 0;}return 1;}
@@ -171,6 +162,7 @@ enum {
     APP_RESET,
     APP_EXIT
 } State;
+
 
 typedef struct {
     char *buf;
@@ -199,6 +191,19 @@ typedef struct {
 //#define IF_LOCK_MUTEX(P) if(pthread_mutex_lock(P) != 0)
 //#define IF_TRYLOCK_MUTEX(P) if(pthread_mutex_trylock(P) != 0)
 //#define UNLOCK_MUTEX(P) pthread_mutex_unlock(P)
+
+struct channel_ts_st {
+    int id;
+    void * data;
+    int save;
+    uint32_t error_code;
+    
+    int sock_fd;
+    struct timespec cycle_duration;
+    pthread_t thread;
+    Mutex mutex;
+    struct channel_ts_st *next;
+};
 
 
 extern char * strcpyma(char **dest, char *src);
@@ -242,6 +247,7 @@ extern int createMThread(pthread_t *new_thread, void *(*thread_routine) (void *)
 extern int threadCancelDisable(int *old_state) ;
 
 extern int threadSetCancelState(int state);
+
 
 
 #endif 

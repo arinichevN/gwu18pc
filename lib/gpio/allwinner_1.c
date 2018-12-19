@@ -12,6 +12,7 @@
 
 #define LE32TOH(X)  le32toh(*((uint32_t*)(X)))
 
+size_t mmap_length=0;
 volatile uint32_t *gpio_buf;
 
 int gpio_port[PIN_NUM];
@@ -138,7 +139,8 @@ int gpioSetup() {
     }
     int addr = 0x01c20800 & ~(pagesize - 1);
     int offset = 0x01c20800 & (pagesize - 1);
-    gpio_buf = mmap(NULL, (0x800 + pagesize - 1) & ~(pagesize - 1), PROT_WRITE | PROT_READ, MAP_SHARED, fd, addr);
+    size_t mmap_length=(0x800 + pagesize - 1) & ~(pagesize - 1);
+    gpio_buf = mmap(NULL, mmap_length, PROT_WRITE | PROT_READ, MAP_SHARED, fd, addr);
     close(fd);
     if (gpio_buf == MAP_FAILED) {
         fprintf(stderr, "%s(): ", __func__);
@@ -150,6 +152,10 @@ int gpioSetup() {
     return 1;
 }
 
-int gpioFree() {
-    return 1;
+void gpioFree() {
+     if(gpio_buf !=NULL && gpio_buf!=MAP_FAILED){
+		if(munmap((void*)gpio_buf, mmap_length)!=0){
+			perrord("munmap()");
+		}
+	}
 }

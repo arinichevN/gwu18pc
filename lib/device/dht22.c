@@ -3,7 +3,7 @@
 #define DHT22_MAXTIMINGS 85
 #define DHT22_MAX_VAL 83
 
-int dht22_read(int pin, float *t, float *h) {
+int dht22_read(int pin, double *t, double *h) {
     //sending request
     pinPUD(pin, PUD_OFF);
     pinModeOut(pin);
@@ -69,9 +69,9 @@ int dht22_read(int pin, float *t, float *h) {
         return 0;
     }
     if ((data[4] == ((data[0] + data[1] + data[2] + data[3]) & 0xFF))) {
-        *h = (float) data[0] * 256 + (float) data[1];
+        *h = (double) data[0] * 256 + (double) data[1];
         *h /= 10;
-        *t = (float) (data[2] & 0x7F)* 256 + (float) data[3];
+        *t = (double) (data[2] & 0x7F)* 256 + (double) data[3];
         *t /= 10.0;
         if ((data[2] & 0x80) != 0) {
             *t *= -1;

@@ -1,7 +1,5 @@
 #include "lcorrection.h"
 
-FUN_LIST_GET_BY_ID(LCorrection)
-
 
 int initLCorrection(LCorrectionList *list, const char *config_path) {
     TSVresult tsv = TSVRESULT_INITIALIZER;
@@ -45,7 +43,7 @@ int initLCorrection(LCorrectionList *list, const char *config_path) {
     return 1;
 }
 
-void lcorrect(float *out, LCorrection *x) {
+void lcorrect(double *out, LCorrection *x) {
     if (x == NULL) {
         return;
     }

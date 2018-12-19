@@ -1,7 +1,7 @@
 
 #include "dbp.h"
 
-int dbp_init(PGconn **conn, char *conninfo) {
+int dbp_open(const char *conninfo,PGconn **conn) {
     if (PQstatus(*conn) == CONNECTION_OK) {
         return 1;
     }
@@ -16,12 +16,52 @@ int dbp_init(PGconn **conn, char *conninfo) {
     return 1;
 }
 
-void dbp_free(PGconn *conn) {
-    if (PQstatus(conn) == CONNECTION_OK) {
-        PQfinish(conn);
+int dbp_wait(const char *conninfo){
+    while(1){
+    PGPing r=PQping(conninfo);
+    switch(r){
+    case PQPING_OK:
+    return 1;
+    break;
+    case PQPING_REJECT:
+    #ifdef MODE_DEBUG
+        fprintf(stderr, "%s(): %s\n", F, "warning: database server is not ready");
+#endif
+    break;
+    case PQPING_NO_RESPONSE:
+        #ifdef MODE_DEBUG
+        fprintf(stderr, "%s(): %s\n", F, "warning: no response from database server");
+#endif
+    break;
+    case PQPING_NO_ATTEMPT:
+            #ifdef MODE_DEBUG
+        fprintf(stderr, "%s(): %s\n", F, "failed to ping database server");
+#endif
+    return 0;
+	}
+	delayUsIdle(DBP_WAIT_DELAY_US);
     }
 }
 
+int dbp_getConnAlt(PGconn **conn_out, int *close, const PGconn * conn, const char * conninfo ){
+	*close=0;
+	if (conn != NULL && conninfo != NULL) {
+        putsde("db_conn xor db_conninfo expected\n");
+        return 0;
+    }
+    if (conninfo != NULL) {
+		PGconn *_conn;
+        if (!dbp_open(conninfo, &_conn)) {
+            putsde("failed\n");
+            return 0;
+        }
+        *conn_out=_conn;
+        *close=1;
+    } else {
+        *conn_out = conn;
+    }
+    return 1;
+}
 /*
  * for command returning NO data
 */
@@ -30,19 +70,15 @@ int dbp_cmd(PGconn *conn, char *q) {
     int out = 0;
     PGresult *r = PQexec(conn, q);
     if (r == NULL) {
-#ifdef MODE_DEBUG
-        fprintf(stderr, "%s(): %s: no result: %s\n", F, q, PQerrorMessage(conn));
-#endif
+        printde("%s: no result: %s\n", q, PQerrorMessage(conn));
         return out;
     }
     if (PQresultStatus(r) == PGRES_COMMAND_OK) {
         out = 1;
     }
-#ifdef MODE_DEBUG
     if (out == 0) {
-        fprintf(stderr, "%s(): %s: command is not ok\n", F, q);
+        printde("%s: command is not ok\n", q);
     }
-#endif
     PQclear(r);
     return out;
 }
@@ -51,22 +87,14 @@ int dbp_cmd(PGconn *conn, char *q) {
  *  for command returning data
 */
 
-PGresult *dbp_exec(PGconn *conn, char *q) {
-    PGresult *r = PQexec(conn, q);
-    if (r == NULL) {
-#ifdef MODE_DEBUG
-        fprintf(stderr, "%s(): %s: no result: %s\n", F, q, PQerrorMessage(conn));
-#endif
-        return r;
+int dbp_exec (PGresult **r , PGconn *conn, const char *q) {
+   *r = PQexec(conn, q);
+    if (PQresultStatus(*r) != PGRES_TUPLES_OK) {
+        printde("%s: tuples are not ok: %s\n", q, PQerrorMessage(conn));
+        PQclear(*r);
+        return 0;
     }
-    if (PQresultStatus(r) != PGRES_TUPLES_OK) {
-#ifdef MODE_DEBUG
-        fprintf(stderr, "%s(): %s: tuples are not ok\n", F, q);
-#endif
-        PQclear(r);
-        r = NULL;
-    }
-    return r;
+    return 1;
 }
 //for use with select count(*)
 
@@ -166,5 +194,23 @@ int dbp_conninfoEq(char *c1, char *c2) {
     if (strcmp(user1, user2) != 0) {
         return 0;
     }
+    return 1;
+}
+
+int dbp_saveTableFieldInt(const char * table, const char *field, int id, int value, const char * schema,  PGconn *conn, const char* conninfo) {
+        PGconn *db;
+    int close=0;
+    if ( !dbp_getConnAlt ( &db, &close, conn, conninfo ) ) {
+        putsde ( "DB connection failed\n" );
+        return 0;
+    }
+    char q[LINE_SIZE];
+    snprintf(q, sizeof q, "update '%s'.'%s' set '%s'=%d where id=%d", schema, table, field, value, id);
+    if (!dbp_cmd ( db, q ) ) ) {
+        putsde ( "failed to save\n" );
+        if ( close ) PQfinish ( db );
+        return 0;
+    }
+    if ( close ) PQfinish ( db );
     return 1;
 }

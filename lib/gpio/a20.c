@@ -163,8 +163,8 @@ int gpioSetup() {
     return 1;
 }
 
-int gpioFree() {
-    return 1;
+void gpioFree() {
+    ;
 }
 
 

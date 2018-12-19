@@ -10,8 +10,8 @@
 #define GPIO_BASE_LM_BP  (0x01f02000)   
 #define GPIO_BASE_BP     (0x01C20000)
 
-static volatile uint32_t *gpio_buf;
-static volatile uint32_t *gpio_lm_buf;
+static volatile uint32_t *gpio_buf=NULL;
+static volatile uint32_t *gpio_lm_buf=NULL;
 extern char *physToGpio[];
 static int gpio_port[PIN_NUM];
 static int gpio_index[PIN_NUM];
@@ -209,6 +209,15 @@ int gpioSetup() {
     return 1;
 }
 
-int gpioFree() {
-    return 1;
+void gpioFree() {
+	if(gpio_buf !=NULL && gpio_buf!=MAP_FAILED){
+		if(munmap((void*)gpio_buf, BLOCK_SIZE)!=0){
+			perrord("munmap()");
+		}
+	}
+	if(gpio_lm_buf !=NULL && gpio_lm_buf!=MAP_FAILED){
+       if(munmap((void*)gpio_lm_buf, BLOCK_SIZE)!=0){
+			perrord("munmap()");
+		}
+    }
 }

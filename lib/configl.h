@@ -36,6 +36,8 @@ extern int config_getPeerList(PeerList *list, int *fd,  const char *db_path);
 
 extern int config_getPeer(Peer *item, const char * peer_id, int *fd, sqlite3 *db, const char *db_path);
 
+extern int config_getPort(int *port, const char *peer_id, sqlite3 *dbl, const char *db_path);
+
 extern int config_getSensorFTSList(SensorFTSList *list, PeerList *peer_list, const char *db_path);
 
 extern int config_getSensorFTS(SensorFTS *item, int sensor_id, const PeerList *pl, sqlite3 *db);

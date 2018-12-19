@@ -240,12 +240,14 @@ char * TSVgetvalues(TSVresult *r, int row_number, const char * column_name) {
         if (strcmp(column_name, r->column_name[i]) == 0) {
             int ind = r->column_name_length * row_number + i;
             if (ind >= r->data_length) {
+                printde("index out of valid bound for column '%s' and row %d", column_name, row_number);
                 r->null_returned=1;
                 return NULL;
             }
             return r->data[ind];
         }
     }
+    printde("column '%s' not found", column_name);
     r->null_returned=1;
     return NULL;
 }

@@ -1,25 +1,23 @@
 
 #include "main.h"
 
-FUN_LIST_GET_BY_ID(Device)
-FUN_LIST_GET_BY_ID(Thread)
 
-int checkDevice(DeviceList *list) {
+int checkChannel(ChannelList *list) {
     int valid = 1;
     FORLi{
-        if (!checkPin(LIi.pin)) {
-            fprintf(stderr, "%s(): check device configuration file: bad pin where id=%d\n", F, LIi.id);
+        if (!checkPin(LIi.device.pin)) {
+            fprintf(stderr, "%s(): check channel configuration file: bad pin where id=%d\n", F, LIi.id);
             valid = 0;
         }
-        if (LIi.resolution < 9 || LIi.resolution > 12) {
-            fprintf(stderr, "%s(): check device configuration file: bad resolution where id=%d\n", F, LIi.id);
+        if (LIi.device.resolution < 9 || LIi.device.resolution > 12) {
+            fprintf(stderr, "%s(): check channel configuration file: bad resolution where id=%d\n", F, LIi.id);
             valid = 0;
         }
         //unique id
         FORLLj
         {
             if (LIi.id == LIj.id) {
-                fprintf(stderr, "%s(): check device table: id should be unique, repetition found where id=%d\n", F, LIi.id);
+                fprintf(stderr, "%s(): check channel configuration file: id should be unique, repetition found where id=%d\n", F, LIi.id);
                 valid = 0;
             }
         }
@@ -29,7 +27,7 @@ int checkDevice(DeviceList *list) {
     return valid;
 }
 
-void freeDeviceList(DeviceList *list) {
+void freeChannelList(ChannelList *list) {
     FORLi{
         freeMutex(&LIi.mutex);
     }
@@ -38,7 +36,7 @@ void freeDeviceList(DeviceList *list) {
 
 void freeThreadList(ThreadList *list) {
     FORLi{
-        FREE_LIST(&LIi.device_plist);
+        FREE_LIST(&LIi.channel_plist);
         FREE_LIST(&LIi.unique_pin_list);
     }
     FREE_LIST(list);
@@ -84,15 +82,13 @@ int setResolution(Device *item) {
             return 1;
         }
     }
-#ifdef MODE_DEBUG
-    fprintf(stderr, "%s(): setting resolution failed where device_id=%d\n", F, item->id);
-#endif
+    printde("setting resolution failed where device_address=%.2hhx%.2hhx%.2hhx%.2hhx%.2hhx%.2hhx%.2hhx%.2hhx\n", item->address[0],item->address[1],item->address[2],item->address[3],item->address[4],item->address[5],item->address[6],item->address[7] );
     return 0;
 }
 
-void deviceRead(Device *item) {
-    float v;
-    int r = ds18b20_read_temp(item->pin, item->address, &v);
+void channelRead(Channel *item) {
+    double v;
+    int r = ds18b20_read_temp(item->device.pin, item->device.address, &v);
     if (r || (!r && item->result.state)) {
         if (lockMutex(&item->mutex)) {
             if (r) {
@@ -104,25 +100,32 @@ void deviceRead(Device *item) {
             unlockMutex(&item->mutex);
         }
     }
+    printdo("%d %f %d\n", item->id, item->result.value, item->result.state);
 }
 
-int catFTS(Device *item, ACPResponse * response) {
-    return acp_responseFTSCat(item->id, item->result.value, item->result.tm, item->result.state, response);
+int catFTS ( Channel *item, ACPResponse * response ) {
+    if ( lockMutex ( &item->mutex ) ) {
+        int r =  acp_responseFTSCat ( item->result.id, item->result.value, item->result.tm, item->result.state, response );
+        unlockMutex ( &item->mutex );
+        return r;
+    }
+    return 0;
 }
 
 void printData(ACPResponse * response) {
-#define DLi device_list.item[i]
+#define CLi channel_list.item[i]
+#define CLiD CLi.device
 #define TLi thread_list.item[i]
-#define DPLj device_plist.item[j]
+#define CPLj channel_plist.item[j]
 #define UPLj unique_pin_list.item[j]
     char q[LINE_SIZE];
     snprintf(q, sizeof q, "CONF_MAIN_FILE: %s\n", CONF_MAIN_FILE);
     SEND_STR(q)
-    snprintf(q, sizeof q, "CONF_DEVICE_FILE: %s\n", CONF_DEVICE_FILE);
+    snprintf(q, sizeof q, "CONF_CHANNEL_FILE: %s\n", CONF_CHANNEL_FILE);
     SEND_STR(q)
     snprintf(q, sizeof q, "CONF_THREAD_FILE: %s\n", CONF_THREAD_FILE);
     SEND_STR(q)
-    snprintf(q, sizeof q, "CONF_THREAD_DEVICE_FILE: %s\n", CONF_THREAD_DEVICE_FILE);
+    snprintf(q, sizeof q, "CONF_THREAD_CHANNEL_FILE: %s\n", CONF_THREAD_CHANNEL_FILE);
     SEND_STR(q)
     snprintf(q, sizeof q, "CONF_LCORRECTION_FILE: %s\n", CONF_LCORRECTION_FILE);
     SEND_STR(q)
@@ -136,18 +139,20 @@ void printData(ACPResponse * response) {
     acp_sendLCorrectionListInfo(&lcorrection_list, response, &peer_client);
 
     SEND_STR("+----------------------------------------------------------------------------+\n")
-    SEND_STR("|                                 device                                     |\n")
-    SEND_STR("+-----------+-----------+----------------+-----------+-----------+-----------+\n")
-    SEND_STR("|  pointer  |     id    |     address    |    pin    | resolution| lcorr_ptr |\n")
-    SEND_STR("+-----------+-----------+----------------+-----------+-----------+-----------+\n")
-    FORLISTN(device_list, i) {
-        snprintf(q, sizeof q, "|%11p|%11d|%.2hhx%.2hhx%.2hhx%.2hhx%.2hhx%.2hhx%.2hhx%.2hhx|%11d|%11d|%11p|\n",
-                (void *) &DLi,
-                DLi.id,
-                DLi.address[0], DLi.address[1], DLi.address[2], DLi.address[3], DLi.address[4], DLi.address[5], DLi.address[6], DLi.address[7],
-                DLi.pin,
-                DLi.resolution,
-                (void *) DLi.lcorrection
+    SEND_STR("|                                channel                                     |\n")
+    SEND_STR("+-----------+-----------+-----------+----------------------------------------+\n")
+    SEND_STR("|           |           |           |              device                    |\n")
+    SEND_STR("|           |           |           +----------------+-----------+-----------+\n")
+    SEND_STR("|  pointer  |     id    | lcorr_ptr |     address    |    pin    | resolution|\n")
+    SEND_STR("+-----------+-----------+-----------+----------------+-----------+-----------+\n")
+    FORLISTN(channel_list, i) {
+        snprintf(q, sizeof q, "|%11p|%11d|%11p|%.2hhx%.2hhx%.2hhx%.2hhx%.2hhx%.2hhx%.2hhx%.2hhx|%11d|%11d|\n",
+                (void *) &CLi,
+                CLi.id,
+                (void *) CLi.lcorrection,
+                CLiD.address[0], CLiD.address[1], CLiD.address[2], CLiD.address[3], CLiD.address[4], CLiD.address[5], CLiD.address[6], CLiD.address[7],
+                CLiD.pin,
+                CLiD.resolution
                 );
         SEND_STR(q)
     }
@@ -155,17 +160,17 @@ void printData(ACPResponse * response) {
     SEND_STR("+-----------+-----------+----------------+-----------+-----------+-----------+\n")
 
     SEND_STR("+-----------------------------------------------------------+\n")
-    SEND_STR("|                    device runtime                         |\n")
+    SEND_STR("|                    channel runtime                        |\n")
     SEND_STR("+-----------+-----------+-----------+-----------+-----------+\n")
     SEND_STR("|     id    |   value   |value_state|  tm_sec   |  tm_nsec  |\n")
     SEND_STR("+-----------+-----------+-----------+-----------+-----------+\n")
-    FORLISTN(device_list, i) {
+    FORLISTN(channel_list, i) {
         snprintf(q, sizeof q, "|%11d|%11.3f|%11d|%11ld|%11ld|\n",
-                DLi.id,
-                DLi.result.value,
-                DLi.result.state,
-                DLi.result.tm.tv_sec,
-                DLi.result.tm.tv_nsec
+                CLi.id,
+                CLi.result.value,
+                CLi.result.state,
+                CLi.result.tm.tv_sec,
+                CLi.result.tm.tv_nsec
                 );
         SEND_STR(q)
     }
@@ -173,16 +178,16 @@ void printData(ACPResponse * response) {
     SEND_STR("+-----------+-----------+-----------+-----------+-----------+\n")
 
     SEND_STR("+-----------------------+\n")
-    SEND_STR("|      thread device    |\n")
+    SEND_STR("|      thread channel   |\n")
     SEND_STR("+-----------+-----------+\n")
-    SEND_STR("| thread_id | device_ptr|\n")
+    SEND_STR("| thread_id |channel_ptr|\n")
     SEND_STR("+-----------+-----------+\n")
     FORLISTN(thread_list, i) {
 
-        FORLISTN(TLi.device_plist, j) {
+        FORLISTN(TLi.channel_plist, j) {
             snprintf(q, sizeof q, "|%11d|%11p|\n",
                     TLi.id,
-                    (void *) TLi.DPLj
+                    (void *) TLi.CPLj
                     );
             SEND_STR(q)
         }
@@ -206,9 +211,10 @@ void printData(ACPResponse * response) {
         }
     }
     SEND_STR_L("+-----------+-----------+\n")
-#undef DLi 
+#undef CLi 
+#undef CLiD
 #undef TLi
-#undef DPLj
+#undef CPLj
 #undef UPLj
 
 }

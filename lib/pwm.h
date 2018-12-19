@@ -8,18 +8,27 @@
 
 #define PWM_BUSY LOW
 #define PWM_IDLE HIGH
-#define PWM_RSL 100 //duty cycle should be between 0 and PWM_RSL
-#define PWM_PERIOD_DEFAULT 10 //(sec)
 
 typedef struct {
-    int initialized;
     int state;
-    unsigned int rsl;
     struct timespec start_time;
-    struct timespec period; 
-} PWM;
+    struct timespec toggle_time;//time when we must change state from busy to idle or reverse
+    struct timespec single_time;//(duty_cycle_max - duty_cycle_min)/resolution
+    
+    int resolution;//0 is 0% of power (duty_cycle will be set to PWM.duty_cycle_min) PWM.resolution is 100% of power (duty_cycle will be set to PWM.duty_cycle_max)
+    struct timespec period;
+    struct timespec duty_cycle_min; //0% of power
+    struct timespec duty_cycle_max;//100% of power
 
-extern int pwmctl(PWM *d, int duty_cycle) ;
+
+} PWM;
+extern int pwm_check ( PWM *item );
+extern void pwm_init ( PWM *item ) ;
+extern int pwm_setPeriod ( PWM *item, struct timespec v ) ;
+extern int pwm_setResolution ( PWM *item, int v ) ;
+extern int pwm_setDutyCycleMin ( PWM *item, struct timespec v ) ;
+extern int pwm_setDutyCycleMax ( PWM *item, struct timespec v ) ;
+extern int pwm_control( PWM *item, int duty_cycle );
 
 #endif /* PWM_H */
 

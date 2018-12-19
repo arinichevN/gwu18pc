@@ -3,10 +3,9 @@
 #if multiple lines uncommented then the last one will be active
 #------------------------------------------------------------------
 
-CPU=-DCPU_ANY
+#CPU=-DCPU_ANY
 
-
-#CPU=-DCPU_ALLWINNER_A20
+CPU=-DCPU_ALLWINNER_A20
 #CPU=-DCPU_ALLWINNER_H3
 #CPU=-DCPU_ALLWINNER_H2P
 #CPU=-DCPU_ALLWINNER_H5
