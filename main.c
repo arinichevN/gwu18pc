@@ -7,6 +7,7 @@ int sock_fd = -1;
 Peer peer_client = {.fd = &sock_fd, .addr_size = sizeof peer_client.addr};
 
 ChannelList channel_list = LIST_INITIALIZER;
+FilterList filter_list = LIST_INITIALIZER;
 LCorrectionList lcorrection_list = LIST_INITIALIZER;
 ThreadList thread_list = LIST_INITIALIZER;
 
@@ -75,10 +76,11 @@ void *threadFunction(void *arg) {
             for (int i = 0; i < UPLL; i++) {
                 ds18b20_wait_convertion(UPLIi);
             }
-            for (int i = 0; i < CPLL; i++) {
-                channelRead(CPLIi);
-            }
 #endif
+            for (int i = 0; i < CPLL; i++) {
+                channelRead(CPLIi, item->filter_plist.item[i]);
+            }
+
             threadSetCancelState(old_state);
         }
         sleepRest(item->cycle_duration, t1);
@@ -126,9 +128,17 @@ int initData() {
         FREE_LIST(&lcorrection_list);
         return 0;
     }
-    if (!initThread(&thread_list, &channel_list, CONF_THREAD_FILE, CONF_THREAD_CHANNEL_FILE)) {
+    if (!prepFilterList(&filter_list, &channel_list)) {
+        filter_freeList(&filter_list);
+        freeChannelList(&channel_list);
+        FREE_LIST(&lcorrection_list);
+        return 0;
+    }
+    filter_initFilterList(&filter_list, CONF_FILTER_MA_FILE, CONF_FILTER_EXP_FILE, CONF_CHANNEL_FILTER_FILE);
+    if (!initThread(&thread_list, &channel_list,&filter_list, CONF_THREAD_FILE, CONF_THREAD_CHANNEL_FILE)) {
         freeThreadList(&thread_list);
-        FREE_LIST(&channel_list);
+        filter_freeList(&filter_list);
+        freeChannelList(&channel_list);
         FREE_LIST(&lcorrection_list);
         return 0;
     }
@@ -139,7 +149,8 @@ int initData() {
 void freeData() {
     STOP_ALL_LIST_THREADS(&thread_list);
     freeThreadList(&thread_list);
-    FREE_LIST(&channel_list);
+    filter_freeList(&filter_list);
+    freeChannelList(&channel_list);
     FREE_LIST(&lcorrection_list);
 }
 

@@ -61,6 +61,7 @@ int fexp_initList(FilterEXPList *list, const char *config_path) {
 void fexp_calc(double *v, void *filter) {
     FilterEXP *item=filter;
     if (!item->f) {
+        item->vp = *v;
         item->f = 1;
         return;
     }
@@ -74,7 +75,7 @@ void fexp_free(FilterEXP *item) {
 }
 
 void fexp_freeList(FilterEXPList *list) {
-    FORL{
+    FORLi{
         fexp_free(&LIi);
     }
     FREE_LIST(list);

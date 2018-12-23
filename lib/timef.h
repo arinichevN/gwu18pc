@@ -19,6 +19,8 @@
 #define WDAY_NUM 7
 //CLOCK_PROCESS_CPUTIME_ID
 
+//interval < 1000 usec
+#define DELAY_US_BUSY(interval) delayTsBusy ( (struct timespec) {0,interval*1000} )
 #define timespec2double(d, ts) d=(ts)->tv_sec + (double) (ts)->tv_nsec*NANO_FACTOR
 #define double2timespec(ts, d)  (ts)->tv_sec = d; (ts)->tv_nsec = ( d - (long int ) d ) / NANO_FACTOR;
 #define usec2timespec(us, ts)             \
@@ -78,6 +80,8 @@ extern void delayUsBusy(unsigned int td);
 extern void delayTsBusy(struct timespec interval);
 
 extern void delayUsBusyC(unsigned int td);
+
+extern void delayTsBusyRest ( struct timespec interval, struct timespec start );
 
 extern void delayUsIdle(unsigned int td);
 

@@ -37,39 +37,10 @@ void freeChannelList(ChannelList *list) {
 void freeThreadList(ThreadList *list) {
     FORLi{
         FREE_LIST(&LIi.channel_plist);
+        FREE_LIST(&LIi.filter_plist);
         FREE_LIST(&LIi.unique_pin_list);
     }
     FREE_LIST(list);
-}
-
-void stopAllThreads(ThreadList * list) {
-    FORLi{
-#ifdef MODE_DEBUG
-        printf("signaling thread %d to cancel...\n", LIi.id);
-#endif
-        if (pthread_cancel(LIi.thread) != 0) {
-#ifdef MODE_DEBUG
-            perror("pthread_cancel()");
-#endif
-        }
-    }
-
-    FORLi{
-        void * result;
-#ifdef MODE_DEBUG
-        printf("joining thread %d...\n", LIi.id);
-#endif
-        if (pthread_join(LIi.thread, &result) != 0) {
-#ifdef MODE_DEBUG
-            perror("pthread_join()");
-#endif
-        }
-        if (result != PTHREAD_CANCELED) {
-#ifdef MODE_DEBUG
-            printf("thread %d not canceled\n", LIi.id);
-#endif
-        }
-    }
 }
 
 int setResolution(Device *item) {
@@ -86,21 +57,29 @@ int setResolution(Device *item) {
     return 0;
 }
 
-void channelRead(Channel *item) {
+void channelRead(Channel *item, Filter *filter) {
     double v;
+#ifdef CPU_ANY
+    int r=1;v=0.0;
+#else
     int r = ds18b20_read_temp(item->device.pin, item->device.address, &v);
+#endif
+    struct timespec tm =getCurrentTime();
     if (r || (!r && item->result.state)) {
         if (lockMutex(&item->mutex)) {
             if (r) {
-                item->result.tm = getCurrentTime();
+                item->result.tm = tm;
+                for ( int i = 0; i < filter->af_list.length; i++ ) {
+                    filter->af_list.item[i].fnc ( &v, filter->af_list.item[i].ptr );
+                }
+                lcorrect(&v, item->lcorrection);
                 item->result.value = v;
-                lcorrect(&item->result.value, item->lcorrection);
             }
             item->result.state = r;
             unlockMutex(&item->mutex);
         }
     }
-    printdo("%d %f %d\n", item->id, item->result.value, item->result.state);
+    printdo("%d %.3f %.3f %d %ld %ld\n", item->id, v,  item->result.value, item->result.state, item->result.tm.tv_sec, item->result.tm.tv_nsec);
 }
 
 int catFTS ( Channel *item, ACPResponse * response ) {
@@ -129,6 +108,12 @@ void printData(ACPResponse * response) {
     SEND_STR(q)
     snprintf(q, sizeof q, "CONF_LCORRECTION_FILE: %s\n", CONF_LCORRECTION_FILE);
     SEND_STR(q)
+    snprintf ( q, sizeof q, "CONF_FILTER_MA_FILE: %s\n", CONF_FILTER_MA_FILE );
+    SEND_STR ( q )
+    snprintf ( q, sizeof q, "CONF_FILTER_EXP_FILE: %s\n", CONF_FILTER_EXP_FILE );
+    SEND_STR ( q )
+    snprintf ( q, sizeof q, "CONF_CHANNEL_FILTER_FILE: %s\n", CONF_CHANNEL_FILTER_FILE );
+    SEND_STR ( q )
     snprintf(q, sizeof q, "port: %d\n", sock_port);
     SEND_STR(q)
     snprintf(q, sizeof q, "app_state: %s\n", getAppState(app_state));
@@ -176,6 +161,8 @@ void printData(ACPResponse * response) {
     }
 
     SEND_STR("+-----------+-----------+-----------+-----------+-----------+\n")
+    
+    acp_sendFilterListInfo(&filter_list, response, &peer_client);
 
     SEND_STR("+-----------------------+\n")
     SEND_STR("|      thread channel   |\n")

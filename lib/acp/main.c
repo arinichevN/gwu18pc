@@ -1392,5 +1392,60 @@ void acp_sendLReductionListInfo ( LReductionList *list, ACPResponse *response, P
     ACP_SEND_STR ( "+-----------+-----------+-----------+-----------+-----------+-----------+\n" )
 }
 
+void acp_sendFilterListInfo(FilterList *list, ACPResponse *response, Peer *peer ){
+    char q[LINE_SIZE];
+    ACP_SEND_STR ( "+-----------------------------------------------+\n" )
+    ACP_SEND_STR ( "|               channel exp filter              |\n" )
+    ACP_SEND_STR ( "+-----------+-----------+-----------+-----------+\n" )
+    ACP_SEND_STR ( "|channel_id | filter_id |filter_ptr | filter_a  |\n" )
+    ACP_SEND_STR ( "+-----------+-----------+-----------+-----------+\n" )
+    FORLi {
+        FORLISTN ( LIi.fexp_list, j ) {
+            snprintf ( q, sizeof q, "|%11d|%11d|%11p|%11.3f|\n",
+                       LIi.id,
+                       LIi.fexp_list.item[j].id,
+                       ( void * ) &LIi.fexp_list.item[j],
+                       LIi.fexp_list.item[j].a
+                     );
+            ACP_SEND_STR ( q )
+        }
+    }
+    ACP_SEND_STR ( "+-----------+-----------+-----------+-----------+\n" )
+    
+    ACP_SEND_STR ( "+-----------------------------------------------+\n" )
+    ACP_SEND_STR ( "|               channel ma filter               |\n" )
+    ACP_SEND_STR ( "+-----------+-----------+-----------+-----------+\n" )
+    ACP_SEND_STR ( "|channel_id | filter_id |filter_ptr |filter_leng|\n" )
+    ACP_SEND_STR ( "+-----------+-----------+-----------+-----------+\n" )
+    FORLi {
+        FORLISTN ( LIi.fma_list, j ) {
+            snprintf ( q, sizeof q, "|%11d|%11d|%11p|%11d|\n",
+                       LIi.id,
+                       LIi.fma_list.item[j].id,
+                       ( void * ) &LIi.fma_list.item[j],
+                       LIi.fma_list.item[j].length
+                     );
+            ACP_SEND_STR ( q )
+        }
+    }
+    ACP_SEND_STR ( "+-----------+-----------+-----------+-----------+\n" )
+    
+    ACP_SEND_STR ( "+-----------------------+\n" )
+    ACP_SEND_STR ( "|    channel filter     |\n" )
+    ACP_SEND_STR ( "+-----------+-----------+\n" )
+    ACP_SEND_STR ( "|channel_id |filter_ptr |\n" )
+    ACP_SEND_STR ( "+-----------+-----------+\n" )
+    FORLi {
+        FORLISTN ( LIi.af_list, j ) {
+            snprintf ( q, sizeof q, "|%11d|%11p|\n",
+                       LIi.id,
+                       LIi.af_list.item[j].ptr
+                     );
+            ACP_SEND_STR ( q )
+        }
+    }
+    ACP_SEND_STR ( "+-----------+-----------+\n" )
+}
+
 
 

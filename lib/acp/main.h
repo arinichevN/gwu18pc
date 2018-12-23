@@ -18,6 +18,7 @@
 #include "../crc.h"
 #include "../lcorrection.h"
 #include "../lreduction.h"
+#include "../filter/common.h"
 
 #define ACP_RETRY_NUM 12
 
@@ -327,6 +328,8 @@ extern void acp_sendPeerListInfo(PeerList *pl, ACPResponse *response, Peer *peer
 extern void acp_sendLCorrectionListInfo(LCorrectionList *list, ACPResponse *response, Peer *peer);
 
 extern void acp_sendLReductionListInfo(LReductionList *list, ACPResponse *response, Peer *peer);
+
+extern void acp_sendFilterListInfo(FilterList *list, ACPResponse *response, Peer *peer );
 
 DEC_FUN_ACP_REQUEST_DATA_TO(I1List)
 
