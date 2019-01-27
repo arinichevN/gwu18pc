@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sqlite3.h>
+#include "sqlite3.h"
 
 #include "app.h"
 
@@ -18,6 +18,10 @@
 extern int db_open(const char *path, sqlite3 **db);
 
 extern int db_openR(const char *path, sqlite3 **db);
+
+extern sqlite3 *db_openAlt(sqlite3 *dbl, const char *db_path, int *close);
+
+extern sqlite3 *db_openRAlt(sqlite3 *dbl, const char *db_path, int *close);
 
 extern void db_close(sqlite3 *db);
 

@@ -4,11 +4,14 @@
 #include "acp/main.h"
 
 typedef struct {
-    SensorFTS sensor;
-    float green_value;
+    int id;
+    RChannel remote_channel;
+    double value;
     int active;
 } GreenLight;
+DEC_LIST(GreenLight)
 
+extern int greenLight_init ( GreenLight *item, int *fd ) ;
 extern int greenLight_isGreen(GreenLight *item);
 
 #endif

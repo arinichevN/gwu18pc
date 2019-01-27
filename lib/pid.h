@@ -18,12 +18,12 @@
 
 
 typedef struct {
-    float integral_error;
-    float previous_error;
-    float kp, ki, kd;
-    float max_output;
-    float min_output;
-    float previous_output;
+    double integral_error;
+    double previous_error;
+    double kp, ki, kd;
+    double max_output;
+    double min_output;
+    double previous_output;
     struct timespec previous_time;
     int reset;
     char mode;// PID_MODE_HEATER or PID_MODE_COOLER
@@ -31,36 +31,36 @@ typedef struct {
 
 typedef struct {
     int isMax, isMin;
-    float setpoint;
-    float noiseBand;
+    double setpoint;
+    double noiseBand;
     int controlType;
     int running;
     struct timespec peak1, peak2, lastTime;
     struct timespec sampleTime;
     int nLookBack;
     int peakType;
-    float lastInputs[101];
-    float peaks[10];
+    double lastInputs[101];
+    double peaks[10];
     int peakCount;
     int justchanged;
     int justevaled;
-    float absMax, absMin;
-    float oStep;
-    float outputStart;
-    float Ku, Pu;
+    double absMax, absMin;
+    double oStep;
+    double outputStart;
+    double Ku, Pu;
 }PID_AT;
 
 
-extern float pid(PID *p, float set_point, float input);
+extern double pid(PID *p, double set_point, double input);
 
-extern float pid_mx(PID *p, float set_point, float input);
+extern double pid_mx(PID *p, double set_point, double input);
 
-extern float pidwt(PID *p, float set_point, float input, struct timespec tm);
+extern double pidwt(PID *p, double set_point, double input, struct timespec tm);
 
-extern float pidwt_mx(PID *p, float set_point, float input, struct timespec tm) ;
+extern double pidwt_mx(PID *p, double set_point, double input, struct timespec tm) ;
 
 extern void stopPid(PID *p);
 
-extern int pidAutoTune(PID_AT *at, PID *p, float input, float *output) ;
+extern int pidAutoTune(PID_AT *at, PID *p, double input, double *output) ;
 #endif 
 

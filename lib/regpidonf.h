@@ -7,27 +7,28 @@
 #include "pid.h"
 
 typedef struct {
-    EM em;
-    float delta;
+    RChannel remote_channel;
+    double delta;
+    double output_min;
+    double output_max;
     PID pid;
-    float output;
+    double output;
     char mode;
 
 } RegPIDOnfEM;
 
 typedef struct {
-    SensorFTS sensor;
-    EM em;
+    RegSensor sensor;
+    RegPIDOnfEM em;
     
-    float delta;
+    double delta;
     PID pid;
     char mode;//heater or cooler
-    float goal;
+    double goal;
 
     char state;
     char state_r;
     char state_onf;
-    float output;
     int snsrf_count;
 } RegPIDOnf;
 
@@ -39,21 +40,21 @@ extern void regpidonf_disable(RegPIDOnf *item) ;
 
 extern int regpidonf_getEnabled(const RegPIDOnf *item) ;
 
-extern void regpidonf_setDelta(RegPIDOnf *item, float value) ;
+extern void regpidonf_setDelta(RegPIDOnf *item, double value) ;
 
-extern void regpidonf_setKp(RegPIDOnf *item, float value) ;
+extern void regpidonf_setKp(RegPIDOnf *item, double value) ;
 
-extern void regpidonf_setKi(RegPIDOnf *item, float value) ;
+extern void regpidonf_setKi(RegPIDOnf *item, double value) ;
 
-extern void regpidonf_setKd(RegPIDOnf *item, float value) ;
+extern void regpidonf_setKd(RegPIDOnf *item, double value) ;
 
-extern void regpidonf_setGoal(RegPIDOnf *item, float value) ;
+extern void regpidonf_setGoal(RegPIDOnf *item, double value) ;
 
 extern void regpidonf_setMode(RegPIDOnf *item, const char * value) ;
 
 extern void regpidonf_setEMMode(RegPIDOnf *item, const char * value) ;
 
-extern void regpidonf_setPower(RegPIDOnf *item, float value) ;
+extern void regpidonf_setPower(RegPIDOnf *item, double value) ;
 
 extern void regpidonf_turnOff(RegPIDOnf *item) ;
 

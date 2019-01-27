@@ -6,13 +6,13 @@
 
 //time from inside
 
-float pid(PID *p, float set_point, float input) {
+double pid(PID *p, double set_point, double input) {
     struct timespec now = getCurrentTime();
-    float output;
+    double output;
     if (!p->reset) {
         double dt;
-        float error, derrivitive_error;
-        dt = (float) (now.tv_sec - p->previous_time.tv_sec)+(now.tv_nsec - p->previous_time.tv_nsec) * NANO_FACTOR;
+        double error, derrivitive_error;
+        dt = (double) (now.tv_sec - p->previous_time.tv_sec)+(now.tv_nsec - p->previous_time.tv_nsec) * NANO_FACTOR;
         if (dt < 0) {//we will hope this happens rarely
             p->previous_time = now;
             return p->previous_output;
@@ -44,15 +44,15 @@ float pid(PID *p, float set_point, float input) {
 
 //time from inside, output limited
 
-float pid_mx(PID *p, float set_point, float input) {
+double pid_mx(PID *p, double set_point, double input) {
     struct timespec now = getCurrentTime();
-    float output;
+    double output;
     if (!p->reset) {
         double dt;
-        float error, derrivitive_error;
-        float integral_error = p->integral_error;
+        double error, derrivitive_error;
+        double integral_error = p->integral_error;
 
-        dt = (float) (now.tv_sec - p->previous_time.tv_sec)+(now.tv_nsec - p->previous_time.tv_nsec) * NANO_FACTOR;
+        dt = (double) (now.tv_sec - p->previous_time.tv_sec)+(now.tv_nsec - p->previous_time.tv_nsec) * NANO_FACTOR;
         if (dt < 0) {//we will hope this happens rarely
             p->previous_time = now;
             return p->previous_output;
@@ -94,12 +94,12 @@ float pid_mx(PID *p, float set_point, float input) {
 
 //time from outside
 
-float pidwt(PID *p, float set_point, float input, struct timespec tm) {
-    float output;
+double pidwt(PID *p, double set_point, double input, struct timespec tm) {
+    double output;
     if (!p->reset) {
         double dt;
-        float error, derrivitive_error;
-        dt = (float) (tm.tv_sec - p->previous_time.tv_sec)+(tm.tv_nsec - p->previous_time.tv_nsec) * NANO_FACTOR;
+        double error, derrivitive_error;
+        dt = (double) (tm.tv_sec - p->previous_time.tv_sec)+(tm.tv_nsec - p->previous_time.tv_nsec) * NANO_FACTOR;
         error = set_point - input;
         p->integral_error += error * dt;
         derrivitive_error = (error - p->previous_error) / dt;
@@ -127,14 +127,14 @@ float pidwt(PID *p, float set_point, float input, struct timespec tm) {
 
 //time from outside, output limited
 
-float pidwt_mx(PID *p, float set_point, float input, struct timespec tm) {
-    float output;
+double pidwt_mx(PID *p, double set_point, double input, struct timespec tm) {
+    double output;
     if (!p->reset) {
         double dt;
-        float error, derrivitive_error;
-        float integral_error = p->integral_error;
+        double error, derrivitive_error;
+        double integral_error = p->integral_error;
 
-        dt = (float) (tm.tv_sec - p->previous_time.tv_sec)+(tm.tv_nsec - p->previous_time.tv_nsec) * NANO_FACTOR;
+        dt = (double) (tm.tv_sec - p->previous_time.tv_sec)+(tm.tv_nsec - p->previous_time.tv_nsec) * NANO_FACTOR;
         if (dt < 0) {//we will hope this happens rarely
             p->previous_time = tm;
             return p->previous_output;
@@ -179,14 +179,14 @@ void stopPid(PID *p) {
 }
 
 /* algorithm from Arduino PID AutoTune Library - Version 0.0.1 by Brett Beauregard <br3ttb@gmail.com> brettbeauregard.com */
-int pidAutoTune(PID_AT *at, PID *p, float input, float *output) {
+int pidAutoTune(PID_AT *at, PID *p, double input, double *output) {
     struct timespec now, dif;
     at->justevaled = 0;
     if (at->peakCount > 9 && at->running) {
         *output = at->outputStart;
         //we can generate tuning parameters!
         at->Ku = 4 * (2 * at->oStep) / ((at->absMax - at->absMin)*3.14159);
-        at->Pu = (float) ((at->peak1.tv_sec - at->peak2.tv_sec)+(at->peak1.tv_nsec - at->peak2.tv_nsec) * NANO_FACTOR) / 1000;
+        at->Pu = (double) ((at->peak1.tv_sec - at->peak2.tv_sec)+(at->peak1.tv_nsec - at->peak2.tv_nsec) * NANO_FACTOR) / 1000;
         p->kp = 0.6 * at->Ku;
         p->ki = 1.2 * at->Ku / at->Pu;
         p->kd = 0.075 * at->Ku * at->Pu;
@@ -237,7 +237,7 @@ int pidAutoTune(PID_AT *at, PID *p, float input, float *output) {
     //id peaks
     int i;
     for (i = at->nLookBack - 1; i >= 0; i--) {
-        float val = at->lastInputs[i];
+        double val = at->lastInputs[i];
         if (at->isMax) at->isMax = input > val;
         if (at->isMin) at->isMin = input < val;
         at->lastInputs[i + 1] = at->lastInputs[i];
@@ -272,12 +272,12 @@ int pidAutoTune(PID_AT *at, PID *p, float input, float *output) {
     }
 
     if (at->justchanged && at->peakCount > 2) { //we've transitioned.  check if we can autotune based on the last peaks
-        float avgSeparation = (abs(at->peaks[at->peakCount - 1] - at->peaks[at->peakCount - 2]) + abs(at->peaks[at->peakCount - 2] - at->peaks[at->peakCount - 3])) / 2;
+        double avgSeparation = (abs(at->peaks[at->peakCount - 1] - at->peaks[at->peakCount - 2]) + abs(at->peaks[at->peakCount - 2] - at->peaks[at->peakCount - 3])) / 2;
         if (avgSeparation < 0.05 * (at->absMax - at->absMin)) {
             *output = at->outputStart;
             //we can generate tuning parameters!
             at->Ku = 4 * (2 * at->oStep) / ((at->absMax - at->absMin)*3.14159);
-            at->Pu = (float) ((at->peak1.tv_sec - at->peak2.tv_sec)+(at->peak1.tv_nsec - at->peak2.tv_nsec)) / 1000;
+            at->Pu = (double) ((at->peak1.tv_sec - at->peak2.tv_sec)+(at->peak1.tv_nsec - at->peak2.tv_nsec)) / 1000;
             p->kp = 0.6 * at->Ku;
             p->ki = 1.2 * at->Ku / at->Pu;
             p->kd = 0.075 * at->Ku * at->Pu;

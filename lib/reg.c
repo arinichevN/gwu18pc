@@ -29,11 +29,15 @@ char * reg_getStateStr(char state) {
     return "";
 }
 
-int reg_controlEM(EM *item, float output) {
+ int reg_sensorRead ( RegSensor *item ){
+     return acp_getRChannelFTS ( &item->input, &item->remote_channel );
+ }
+
+int reg_controlRChannel(RChannel *item, double output) {
     if (item == NULL) {
         return 0;
     }
-    return acp_setEMFloat(item, output);
+    return acp_setRChannelFloat(item, output);
 }
 
 static int getRegSecureList_callback(void *data, int argc, char **argv, char **azColName) {

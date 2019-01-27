@@ -7,18 +7,19 @@
 #include "green_light.h"
 
 typedef struct {
-    EM em;
-    float delta;
-    float output;
+    RChannel remote_channel;
+    double delta;
+    double output;
+    double output_max;
+    double output_min;
     int use;
 } RegOnfHCEM;
 
 typedef struct {
-    SensorFTS sensor;
-
+    RegSensor sensor;
     RegOnfHCEM heater;
     RegOnfHCEM cooler;
-    float goal;
+    double goal;
     struct timespec change_gap;
     RegSecure secure_out;
     GreenLight green_light;
@@ -26,7 +27,6 @@ typedef struct {
     char state;
     char state_r;
     char state_onf;
-    float output;
     int snsrf_count;
     Ton_ts tmr;
 } RegOnfHC;
@@ -39,17 +39,17 @@ extern void regonfhc_disable(RegOnfHC *item);
 
 extern int regonfhc_getEnabled(const RegOnfHC *item);
 
-extern void regonfhc_setCoolerDelta(RegOnfHC *item, float value);
+extern void regonfhc_setCoolerDelta(RegOnfHC *item, double value);
 
-extern void regonfhc_setHeaterDelta(RegOnfHC *item, float value);
+extern void regonfhc_setHeaterDelta(RegOnfHC *item, double value);
 
-extern void regonfhc_setGoal(RegOnfHC *item, float value);
+extern void regonfhc_setGoal(RegOnfHC *item, double value);
 
 extern void regonfhc_setChangeGap(RegOnfHC *item, int value);
 
-extern void regonfhc_setHeaterPower(RegOnfHC *item, float value);
+extern void regonfhc_setHeaterPower(RegOnfHC *item, double value);
 
-extern void regonfhc_setCoolerPower(RegOnfHC *item, float value);
+extern void regonfhc_setCoolerPower(RegOnfHC *item, double value);
 
 extern void regonfhc_setEMMode(RegOnfHC *item, const char * value);
 

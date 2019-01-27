@@ -1,19 +1,20 @@
 #ifndef LIBPAS_ACP_CHANNEL_H
 #define LIBPAS_ACP_CHANNEL_H
 
-#define ACP_CMD_CHANNEL_STOP "psp"
-#define ACP_CMD_CHANNEL_START "pst"
-#define ACP_CMD_CHANNEL_RESET "prs"
-#define ACP_CMD_CHANNEL_ENABLE "penl"
-#define ACP_CMD_CHANNEL_DISABLE "pdsl"
-#define ACP_CMD_CHANNEL_ADD "padd"
-#define ACP_CMD_CHANNEL_DELETE "pdel"
-#define ACP_CMD_CHANNEL_GET_DATA_RUNTIME "pgdr"
-#define ACP_CMD_CHANNEL_GET_DATA_INIT "pgdi"
-#define ACP_CMD_CHANNEL_GET_DATA "pgd"
-#define ACP_CMD_CHANNEL_GET_ENABLED "pgenl"
-#define ACP_CMD_CHANNEL_SET_SAVE "pssave"
-#define ACP_CMD_CHANNEL_GET_ERROR "pgerr"
+#define ACP_CMD_CHANNEL_STOP "csp"
+#define ACP_CMD_CHANNEL_START "cst"
+#define ACP_CMD_CHANNEL_RESET "crs"
+#define ACP_CMD_CHANNEL_ENABLE "cenl"
+#define ACP_CMD_CHANNEL_DISABLE "cdsl"
+#define ACP_CMD_CHANNEL_ADD "cadd"
+#define ACP_CMD_CHANNEL_DELETE "cdel"
+#define ACP_CMD_CHANNEL_GET_DATA_RUNTIME "cgdr"
+#define ACP_CMD_CHANNEL_GET_DATA_INIT "cgdi"
+#define ACP_CMD_CHANNEL_GET_INFO "cgi"
+#define ACP_CMD_CHANNEL_GET_DATA "cgd"
+#define ACP_CMD_CHANNEL_GET_ENABLED "cgenl"
+#define ACP_CMD_CHANNEL_SET_SAVE "cssave"
+#define ACP_CMD_CHANNEL_GET_ERROR "cgerr"
 
 #endif
 

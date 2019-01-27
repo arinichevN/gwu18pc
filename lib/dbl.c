@@ -25,6 +25,38 @@ int db_openR(const char *path, sqlite3 **db) {
     return 1;
 }
 
+sqlite3 *db_openAlt(sqlite3 *dbl, const char *db_path, int *close){
+    *close=0;
+    if(dbl!=NULL) return dbl;
+    if (db_path != NULL) {
+        sqlite3 *db;
+        if (!db_open(db_path, &db)) {
+            putsde(" failed\n");
+            return NULL;
+        }
+        *close=1;
+        return db;
+    }
+    putsde("dbl or db_path expected\n");
+    return NULL;
+}
+
+sqlite3 *db_openRAlt(sqlite3 *dbl, const char *db_path, int *close){
+    *close=0;
+    if(dbl!=NULL) return dbl;
+    if (db_path != NULL) {
+        sqlite3 *db;
+        if (!db_openR(db_path, &db)) {
+            putsde(" failed\n");
+            return NULL;
+        }
+        *close=1;
+        return db;
+    }
+    putsde("dbl or db_path expected\n");
+    return NULL;
+}
+
 void db_close(sqlite3 *db){
 	sqlite3_close_v2(db);
 }

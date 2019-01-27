@@ -7,8 +7,8 @@
 #define REG_MODE_PID_STR "pid"
 #define REG_MODE_ONF_STR "onf"
 
-#define SNSR_VAL item->sensor.value.value
-#define SNSR_TM item->sensor.value.tm
+#define SNSR_VAL item->sensor.input.value
+#define SNSR_TM item->sensor.input.tm
 
 #define VAL_IS_OUT_H SNSR_VAL > item->goal + item->heater.delta
 #define VAL_IS_OUT_C SNSR_VAL < item->goal - item->cooler.delta
@@ -22,14 +22,19 @@ typedef struct {
     int id;
     int active;
     struct timespec timeout;
-    float heater_duty_cycle;
-    float cooler_duty_cycle;
+    double heater_duty_cycle;
+    double cooler_duty_cycle;
     Ton_ts tmr;
     int done;
     uint32_t *error_code;
 } RegSecure;
 
 DEC_LIST(RegSecure)
+
+typedef struct {
+    RChannel remote_channel;
+    FTS input;
+} RegSensor;
 
 enum {
     REG_OFF,
@@ -45,9 +50,11 @@ enum {
     REG_MODE_ONF
 } StateReg;
 
+extern int reg_sensorRead ( RegSensor *item ) ;
+
 extern char * reg_getStateStr(char state);
 
-extern int reg_controlEM(EM *item, float output);
+extern int reg_controlRChannel(RChannel *item, double output);
 
 extern int reg_getSecureFDB(RegSecure *item, int id, sqlite3 *dbl, const char *db_path);
 

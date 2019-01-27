@@ -6,22 +6,23 @@ struct timespec getCurrentTime() {
     return now;
 }
 
+
 void delayTsBusy ( struct timespec interval ) {
     struct timespec now, end;
-    clock_gettime ( LIB_CLOCK, &now );
+    clock_gettime ( CLOCK_MONOTONIC, &now );
     timespecadd ( &now, &interval, &end );
     while ( timespeccmp ( &now, &end, < ) ) {
-        clock_gettime ( LIB_CLOCK, &now );
+        clock_gettime ( CLOCK_MONOTONIC, &now );
     }
 }
 
 void delayUsBusy ( unsigned int td ) {
     struct timespec now, interval, end;
-    clock_gettime ( LIB_CLOCK, &now );
+    clock_gettime ( CLOCK_MONOTONIC, &now );
     usec2timespec ( td, &interval )
     timespecadd ( &now, &interval, &end );
     while ( timespeccmp ( &now, &end, < ) ) {
-        clock_gettime ( LIB_CLOCK, &now );
+        clock_gettime ( CLOCK_MONOTONIC, &now );
     }
 }
 
@@ -36,24 +37,31 @@ void delayUsBusyC ( unsigned int td ) {
 }
 
 void delayUsIdle ( unsigned int td ) {
-    struct timespec requested, remaining;
+    struct timespec requested;
     usec2timespec ( td, &requested )
-    nanosleep ( &requested, &remaining );
+    nanosleep ( &requested, NULL );
 }
 void delayTsBusyRest ( struct timespec interval, struct timespec start ) {
     struct timespec now, end;
     timespecadd ( &start, &interval, &end );
     do {
-        clock_gettime ( LIB_CLOCK, &now );
+        clock_gettime ( CLOCK_MONOTONIC, &now );
     } while ( timespeccmp ( &now, &end, < ) );
 }
+
+void delayTsIdleRest ( struct timespec interval, struct timespec start ) {
+    struct timespec end;
+    timespecadd ( &start, &interval, &end );
+    clock_nanosleep ( LIB_CLOCK, TIMER_ABSTIME,&end, NULL );
+}
+
 void sleepRest ( struct timespec total, struct timespec start ) {
-    struct timespec now, dif1, dif2, remaining;
-    clock_gettime ( LIB_CLOCK, &now );
+    struct timespec now, dif1, dif2;
+    clock_gettime ( CLOCK_MONOTONIC, &now );
     timespecsub ( &now, &start, &dif1 );
     if ( timespeccmp ( &total, &dif1, > ) ) {
         timespecsub ( &total, &dif1, &dif2 );
-        nanosleep ( &dif2, &remaining );
+        nanosleep ( &dif2, NULL );
     }
 }
 
@@ -106,6 +114,7 @@ int ton_ts ( struct timespec interval, Ton_ts *t ) {
     return 0;
 }
 
+
 void ton_ts_reset ( Ton_ts *t ) {
     t->ready=0;
 }
@@ -115,17 +124,69 @@ void ton_ts_touch ( Ton_ts *t ) {
     t->ready=1;
 }
 
+int ton ( Ton *item ) {
+    struct timespec now;
+    clock_gettime ( LIB_CLOCK, &now );
+    if ( !item->ready ) {
+        item->start=now;
+        timespecadd ( &item->start, &item->interval, &item->end );
+        item->ready = 1;
+    }
+    if ( timespeccmp ( &now, &item->end, > ) ) {
+        item->ready = 0;
+        return 1;
+    }
+    return 0;
+}
+
+int toni (struct timespec interval, Ton *item ) {
+    struct timespec now;
+    clock_gettime ( LIB_CLOCK, &now );
+    if ( !item->ready ) {
+        item->start=now;
+        item->ready = 1;
+    }
+    timespecadd(&item->start, &interval, &item->end);
+    if ( timespeccmp ( &now, &item->end, > ) ) {
+        item->ready = 0;
+        return 1;
+    }
+    return 0;
+}
+
+void tonSetInterval ( struct timespec interval, Ton *item ) {
+    item->interval=interval;
+    timespecadd ( &item->start, &item->interval, &item->end );
+}
+
+void tonReset ( Ton *item ) {
+    item->ready=0;
+}
+
+struct timespec tonTimePassed ( const Ton *item ) {
+    struct timespec now, out;
+    clock_gettime ( LIB_CLOCK, &now );
+    timespecsub ( &now, &item->start, &out );
+    return out;
+}
+
+struct timespec tonTimeRest ( const Ton *item ) {
+    struct timespec now, out;
+    clock_gettime ( LIB_CLOCK, &now );
+    if ( timespeccmp ( &item->end, &now, > ) ) {
+        timespecsub ( &item->end, &now, &out );
+    } else {
+        out.tv_sec=0;
+        out.tv_nsec=0;
+    }
+    return out;
+}
+
 struct timespec getTimePassed_tv ( const Ton_ts *t ) {
     struct timespec now, dif;
     clock_gettime ( LIB_CLOCK, &now );
     timespecsub ( &now, &t->start, &dif );
     return dif;
-}
-
-time_t getTimePassed ( const Ton *t ) {
-    time_t now;
-    time ( &now );
-    return now - t->start;
 }
 
 struct timespec getTimePassed_ts ( struct timespec t ) {
@@ -186,45 +247,8 @@ int timeHasPassed ( struct timespec interval, struct timespec start, struct time
     return 0;
 }
 
-int getTimeRestS ( int interval, Ton *t ) {
-    time_t curr = 0;
-    if ( t->ready ) {
-        time ( &curr );
-        return ( t->start + interval )-curr;
-    } else {
-        return -1;
-    }
-}
-
-void changeTimeT ( time_t *slave, time_t change ) {
-    *slave += change;
-    if ( *slave < 0 ) {
-        if ( change >= 0 ) {
-            *slave = TIME_T_MAX;
-        } else {
-            *slave = 0;
-        }
-    }
-}
-
 void changeInt ( int *v, int inc ) {
     if ( *v + inc > 0 ) {
         *v = *v + inc;
     }
-}
-
-int ton ( time_t interval, Ton *t ) {
-    time_t diff = 0;
-    time_t curr = 0;
-    if ( !t->ready ) {
-        time ( &t->start );
-        t->ready = 1;
-    }
-    time ( &curr );
-    diff = curr - t->start;
-    if ( diff > interval ) {
-        t->ready = 0;
-        return 1;
-    }
-    return 0;
 }

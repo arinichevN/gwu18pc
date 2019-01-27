@@ -6,7 +6,7 @@ int onewire_reset(int pin) {
     pinPUD(pin, PUD_OFF);
     pinModeOut(pin);
     pinLow(pin);
-    delayUsBusy(640); 
+    DELAY_US_BUSY(640); 
     pinHigh(pin); 
     pinModeIn(pin);
     for (int i = 80; i; i--) {
@@ -15,13 +15,13 @@ int onewire_reset(int pin) {
                 if(pinRead(pin)){
                     return 1;
                 }
-                delayUsBusy(1);
+                DELAY_US_BUSY(1);
             }
             return 0;
         }
-        delayUsBusy(1);
+        DELAY_US_BUSY(1);
     }
-    delayUsBusy(1);
+    DELAY_US_BUSY(1);
     return 0;
 }
 
@@ -31,13 +31,13 @@ int onewire_reset(int pin) {
 void onewire_send_bit1(int pin,int bit) {
     pinLow(pin);
     if (bit) {
-        delayUsBusy(5); 
+        DELAY_US_BUSY(5); 
         pinHigh(pin);
-        delayUsBusy(90); 
+        DELAY_US_BUSY(90); 
     } else {
-        delayUsBusy(90); 
+        DELAY_US_BUSY(90); 
         pinHigh(pin);
-        delayUsBusy(5); 
+        DELAY_US_BUSY(5); 
     }
 }
 */
@@ -46,15 +46,15 @@ void onewire_send_bit(int pin,int bit) {
     pinModeOut(pin);
     pinLow(pin);
     if (bit) {
-        delayUsBusy(1); 
+        DELAY_US_BUSY(1); 
         pinHigh(pin);
-        delayUsBusy(60); 
+        DELAY_US_BUSY(60); 
     } else {
-        delayUsBusy(60); 
+        DELAY_US_BUSY(60); 
         pinHigh(pin);
-        delayUsBusy(1); 
+        DELAY_US_BUSY(1); 
     }
-    delayUsBusy(60);
+    DELAY_US_BUSY(60);
 }
 
 
@@ -70,13 +70,13 @@ void onewire_send_byte(int pin,int b) {
  * works, but many crc mistakes
 int onewire_read_bit(int pin) {
     pinLow(pin);
-    delayUsBusy(2); 
+    DELAY_US_BUSY(2); 
     pinHigh(pin);
-    delayUsBusy(8); 
+    DELAY_US_BUSY(8); 
     pinModeIn(pin);
     int r = pinRead(pin);
     pinModeOut(pin);
-    delayUsBusy(80); 
+    DELAY_US_BUSY(80); 
     return r;
 }
 */
@@ -84,13 +84,13 @@ int onewire_read_bit(int pin) {
 int onewire_read_bit(int pin) {
     pinModeOut(pin);
     pinLow(pin);
-    delayUsBusy(2); 
+    DELAY_US_BUSY(2); 
     pinHigh(pin);
-    delayUsBusy(2); 
+    DELAY_US_BUSY(2); 
     pinModeIn(pin);
     int r = pinRead(pin);
     pinModeOut(pin);
-    delayUsBusy(60); 
+    DELAY_US_BUSY(60); 
     return r;
 }
 

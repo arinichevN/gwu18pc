@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <stdarg.h>
 #include <limits.h>
 #include <string.h>
@@ -38,6 +39,9 @@
 #define POSITIVE_INT GOOD_INT
 #define NEGATIVE_INT BAD_INT
 
+#define CDS ACP_DELIMITER_COLUMN_STR
+#define RDS ACP_DELIMITER_ROW_STR
+
 #define DEF_THREAD pthread_t thread;char thread_cmd=0;void *threadFunction(void *arg);
 #define THREAD_CREATE createThread(&thread,&threadFunction,&thread_cmd)
 #define THREAD_STOP thread_cmd = 1;pthread_join(thread, NULL);
@@ -55,11 +59,14 @@
 #define FORLi for (size_t i = 0; i < list->length; i++) 
 #define FORL FORLi
 #define FORMLi for (size_t i = 0; i < list->max_length; i++) 
-#define FORLISTP(V, I) for (size_t I = 0; I < (V)->length; I++) 
-#define FORLISTN(V, I) for (size_t I = 0; I < (V).length; I++) 
+#define FORLISTP(L, I) for (size_t I = 0; I < (L)->length; I++) 
+#define FORLISTN(L, I) for (size_t I = 0; I < (L).length; I++) 
 #define FORLIST(I) for (size_t I = 0; I < list->length; I++) 
 #define FORLLj  for (size_t j = i + 1; j < list->length; j++) 
-#define FORLISTPL(V, I, J)  for (size_t J = i + 1; J < (V)->length; J++) 
+#define FORLISTPL(L, I, J)  for (size_t J = I + 1; J < (L)->length; J++) 
+#define FORLISTNL(L, I, J)  for (size_t J = I + 1; J < (L).length; J++) 
+#define FFORLISTPL(L, I, J)  for (size_t I = 0; I < (L)->length; I++){for (size_t J = I + 1; J < (L)->length; J++)
+#define FFORLISTNL(L, I, J)  for (size_t I = 0; I < (L).length; I++){for (size_t J = I + 1; J < (L).length; J++)
 
 #define FOREACH_CHANNEL FOREACH_LLIST(item,&channel_list,Channel)
 
@@ -109,17 +116,22 @@
     }\
     if (!init_state) {return;}
 
-#define DEF_SERVER_I1LIST I1 i1_arr[request.data_rows_count];I1List i1l;i1l.item=i1_arr;i1l.max_length=request.data_rows_count;i1l.length=0;
-#define DEF_SERVER_I2LIST I2 i2_arr[request.data_rows_count];I2List i2l;i2l.item=i2_arr;i2l.max_length=request.data_rows_count;i2l.length=0;
-#define DEF_SERVER_I1F1LIST I1F1 i1f1_arr[request.data_rows_count];I1F1List i1f1l;i1f1l.item=i1f1_arr;i1f1l.max_length=request.data_rows_count;i1f1l.length=0;
-#define DEF_SERVER_S1LIST(str_sz) S1 s1_arr[request.data_rows_count * str_sz];S1List s1l;s1l.item=s1_arr;s1l.max_length=request.data_rows_count * str_sz;s1l.length=0;
-#define DEF_SERVER_S2LIST S2 s2_arr[request.data_rows_count];S2List s2l;s2l.item=s2_arr;s2l.max_length=request.data_rows_count;s2l.length=0;
-#define DEF_SERVER_I1S1LIST I1S1 i1s1_arr[request.data_rows_count];I1S1List i1s1l;i1s1l.item=i1s1_arr;i1s1l.max_length=request.data_rows_count;i1s1l.length=0;
+#define SERVER_DEF_I1LIST I1 i1_arr[request.data_rows_count];I1List i1l;i1l.item=i1_arr;i1l.max_length=request.data_rows_count;i1l.length=0;
+#define SERVER_DEF_I2LIST I2 i2_arr[request.data_rows_count];I2List i2l;i2l.item=i2_arr;i2l.max_length=request.data_rows_count;i2l.length=0;
+#define SERVER_DEF_I1F1LIST I1F1 i1f1_arr[request.data_rows_count];I1F1List i1f1l;i1f1l.item=i1f1_arr;i1f1l.max_length=request.data_rows_count;i1f1l.length=0;
+#define DEF_SERVER_DEF_S1LIST(str_sz) S1 s1_arr[request.data_rows_count * str_sz];S1List s1l;s1l.item=s1_arr;s1l.max_length=request.data_rows_count * str_sz;s1l.length=0;
+#define SERVER_DEF_S2LIST S2 s2_arr[request.data_rows_count];S2List s2l;s2l.item=s2_arr;s2l.max_length=request.data_rows_count;s2l.length=0;
+#define SERVER_DEF_I1S1LIST I1S1 i1s1_arr[request.data_rows_count];I1S1List i1s1l;i1s1l.item=i1s1_arr;i1s1l.max_length=request.data_rows_count;i1s1l.length=0;
 
 #define SERVER_PARSE_I1LIST acp_requestDataToI1List(&request, &i1l);if (i1l.length <= 0)return;
 #define SERVER_PARSE_I1F1LIST acp_requestDataToI1F1List(&request, &i1f1l);if (i1f1l.length <= 0)return;
 #define SERVER_PARSE_I2LIST acp_requestDataToI2List(&request, &i2l);if (i2l.length <= 0)return;
 #define SERVER_PARSE_I1S1LIST acp_requestDataToI1S1List(&request, &i1s1l);if (i1s1l.length <= 0)return;
+
+#define SERVER_GET_I1LIST_FROM_REQUEST SERVER_DEF_I1LIST SERVER_PARSE_I1LIST
+#define SERVER_GET_I2LIST_FROM_REQUEST SERVER_DEF_I2LIST SERVER_PARSE_I2LIST
+#define SERVER_GET_I1F1LIST_FROM_REQUEST SERVER_DEF_I1F1LIST SERVER_PARSE_I1F1LIST
+#define SERVER_GET_I1S1LIST_FROM_REQUEST SERVER_DEF_I1S1LIST SERVER_PARSE_I1S1LIST
 
 #define SEND_STR(V) acp_responseSendStr(V, ACP_MIDDLE_PACK, response, &peer_client);
 #define SEND_STR_L(V) acp_responseSendStr(V, ACP_LAST_PACK, response, &peer_client);

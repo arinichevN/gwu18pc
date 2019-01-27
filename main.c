@@ -18,9 +18,8 @@ ThreadList thread_list = LIST_INITIALIZER;
 void serverRun(int *state, int init_state) {
     SERVER_HEADER
     SERVER_APP_ACTIONS
-    DEF_SERVER_I1LIST
     if (ACP_CMD_IS(ACP_CMD_GET_FTS)) {
-		SERVER_PARSE_I1LIST
+		SERVER_GET_I1LIST_FROM_REQUEST
         FORLISTN(i1l, i) {
             Channel *item;
             LIST_GETBYID(item, &channel_list, i1l.item[i]);
@@ -48,6 +47,7 @@ void *threadFunction(void *arg) {
 #define UPL item->unique_pin_list
 #define UPLL UPL.length
 #define UPLIi UPL.item[i]
+#define UPLI UPL.item
 
 #define CPL item->channel_plist
 #define CPLL CPL.length
@@ -56,8 +56,8 @@ void *threadFunction(void *arg) {
 
 #ifndef CPU_ANY
     for (size_t i = 0; i < UPLL; i++) {
-        pinPUD(UPLIi, PUD_OFF);
-        pinModeOut(UPLIi);
+        pinPUD(UPLIi.pin, PUD_OFF);
+        pinModeOut(UPLIi.pin);
     }
     for (size_t i = 0; i < CPLL; i++) {
         if (!setResolution(&CPLIi->device)) {
@@ -70,28 +70,21 @@ void *threadFunction(void *arg) {
         int old_state;
         if (threadCancelDisable(&old_state)) {
 #ifndef CPU_ANY
-            for (int i = 0; i < UPLL; i++) {
-                ds18b20_convert_t_all(UPLIi);
-            }
-            for (int i = 0; i < UPLL; i++) {
-                ds18b20_wait_convertion(UPLIi);
-            }
+            convertTemperature(&item->unique_pin_list);
+            waitConvertionAndSetTime(&item->unique_pin_list);
 #endif
+            struct timespec tm =getCurrentTime();
             for (int i = 0; i < CPLL; i++) {
-                channelRead(CPLIi, item->filter_plist.item[i]);
+                channelRead(CPLIi, item->filter_plist.item[i], tm);
             }
 
             threadSetCancelState(old_state);
         }
-        sleepRest(item->cycle_duration, t1);
+        delayTsIdleRest(item->cycle_duration, t1);
     }
 #ifdef MODE_DEBUG
     pthread_cleanup_pop(1);
 #endif
-
-#undef UPL
-#undef UPLL 
-#undef UPLIi 
 
 #undef CPL 
 #undef CPLL

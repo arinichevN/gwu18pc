@@ -69,7 +69,9 @@ typedef struct {
 } Ton_ts;
 
 typedef struct {
-    time_t start;
+    struct timespec start;
+    struct timespec interval;
+    struct timespec end;
     int ready;
 } Ton;
 
@@ -82,6 +84,8 @@ extern void delayTsBusy(struct timespec interval);
 extern void delayUsBusyC(unsigned int td);
 
 extern void delayTsBusyRest ( struct timespec interval, struct timespec start );
+
+extern void delayTsIdleRest ( struct timespec interval, struct timespec start );
 
 extern void delayUsIdle(unsigned int td);
 
@@ -97,9 +101,19 @@ extern void ton_ts_reset(Ton_ts *t);
 
 extern void ton_ts_touch(Ton_ts *t);
 
-extern struct timespec getTimePassed_tv(const Ton_ts *t);
+extern int ton ( Ton *item ) ;
 
-extern time_t getTimePassed(const Ton *t);
+extern int toni (struct timespec interval, Ton *item );
+
+extern void tonSetInterval ( struct timespec interval, Ton *item  ) ;
+
+extern void tonReset ( Ton *item  ) ;
+
+extern struct timespec tonTimePassed ( const Ton *item ) ;
+
+extern struct timespec tonTimeRest ( const Ton *item ) ;
+
+extern struct timespec getTimePassed_tv(const Ton_ts *t);
 
 extern struct timespec getTimePassed_ts(struct timespec t);
 
@@ -111,15 +125,11 @@ extern int toyHasCome(const TOY *current, const TOY *wanted);
 
 extern int todHasCome(long int target, long int current);
 
-extern int getTimeRestS(int interval, Ton *t);
-
 extern int timeHasPassed(struct timespec interval, struct timespec start, struct timespec now);
 
 extern void changeTimeT(time_t *slave, time_t change);
 
 extern void changeInt(int *v, int inc);
-
-extern int ton(time_t interval, Ton *t);
 
 extern long int getCurrTOD();
 

@@ -57,6 +57,7 @@ int initChannel ( ChannelList *list,  LCorrectionList *lcl, const char *data_pat
             printde ( "bad address where channel_id=%d\n", LIi.id );
             break;
         }
+        LIi.tm=NULL;
         if ( TSVnullreturned ( r ) ) {
             break;
         }
@@ -202,7 +203,7 @@ static int buildThreadUniquePin ( Thread *thread ) {
             }
         }
         if ( !f ) {
-            TUPL.item[TUPLL] = TCPL.item[i]->device.pin;
+            TUPL.item[TUPLL].pin = TCPL.item[i]->device.pin;
             TUPLL++;
         }
     }
@@ -218,6 +219,22 @@ static int buildThreadUniquePin ( Thread *thread ) {
 #undef TUPLML
 }
 
+int assignChannelTm ( ThreadList *list, ChannelList *cl ) {
+    FORLISTP ( cl, c ) {
+        cl->item[c].tm=NULL;
+        FORLISTP ( list, t ) {
+            FORLISTN ( list->item[t].unique_pin_list, u ) {
+                if ( cl->item[c].device.pin == list->item[t].unique_pin_list.item[u].pin ) {
+                    cl->item[c].tm = &list->item[t].unique_pin_list.item[u].tm;
+                    goto found;
+                }
+            }
+        }
+        return 0;
+    found:;
+    }
+    return 1;
+}
 int initThread ( ThreadList *list, ChannelList *cl, FilterList *fl, const char *thread_path, const char *thread_channel_path ) {
     TSVresult tsv = TSVRESULT_INITIALIZER;
     TSVresult* r = &tsv;
@@ -327,6 +344,10 @@ int initThread ( ThreadList *list, ChannelList *cl, FilterList *fl, const char *
         }
     }
     TSVclear ( r );
+
+    if ( !assignChannelTm ( list, cl ) ) {
+        return 0;
+    }
 
     //starting threads
     FORLi {

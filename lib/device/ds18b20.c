@@ -63,7 +63,7 @@ int ds18b20_write_scratchpad(int pin, const uint8_t *addr, const uint8_t *data) 
     for (int i = 0; i < DS18B20_EEPROM_BYTE_NUM; i++) {
         onewire_send_byte(pin, data[i]);
     }
-    delayUsBusy(480);
+    DELAY_US_BUSY(480);
     return 1;
 }
 
@@ -73,7 +73,7 @@ int ds18b20_copy_scratchpad(int pin, const uint8_t *addr) {
         return 0;
     }
     onewire_send_byte(pin, DS18B20_CMD_COPY_SCRATCHPAD);
-    delayUsBusy(480);
+    DELAY_US_BUSY(480);
     return 1;
 }
 
@@ -85,7 +85,7 @@ int ds18b20_recall(int pin, const uint8_t *addr) {
     onewire_send_byte(pin, DS18B20_CMD_RECALL);
     while (!onewire_read_bit(pin)) {
     }
-    delayUsBusy(480);
+    DELAY_US_BUSY(480);
     return 1;
 }
 
@@ -152,7 +152,7 @@ int ds18b20_get_resolution(int pin, const uint8_t *addr, int *res) {
 void ds18b20_wait_convertion(int pin) {
     while (!onewire_read_bit(pin)) {
     }
-    delayUsBusy(480);
+    DELAY_US_BUSY(480);
 }
 
 int ds18b20_convert_t(int pin, const uint8_t *addr) {

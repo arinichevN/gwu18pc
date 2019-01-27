@@ -250,7 +250,7 @@ char * TSVgetvalues ( TSVresult *r, int row_number, const char * column_name ) {
             return r->data[ind];
         }
     }
-    printde ( "column '%s' not found", column_name );
+    printde ( "column '%s' not found\n", column_name );
     r->null_returned=1;
     return NULL;
 }

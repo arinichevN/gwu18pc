@@ -27,12 +27,12 @@ int max6675_read(float *result, int sclk, int cs, int miso) {
         int i;
         for (i = 15; i >= 0; i--) {
             pinLow(sclk);
-            delayUsBusy(1000);
+            DELAY_US_BUSY(1000);
             if (pinRead(miso)) {
                 v |= (1 << i);
             }
             pinHigh(sclk);
-            delayUsBusy(1000);
+            DELAY_US_BUSY(1000);
         }
     }
     pinHigh(cs);

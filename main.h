@@ -42,6 +42,7 @@ typedef struct {
     int id;
     Device device;
     FTS result;
+    struct timespec *tm; //pointer to thread unique_pin_list.tm
     LCorrection *lcorrection;
     Mutex mutex;
 } Channel;
@@ -49,11 +50,18 @@ typedef struct {
 DEC_LIST(Channel)
 DEC_PLIST(Channel)
 
+typedef struct {
+	int pin;
+	struct timespec tm;
+} UniquePin;
+
+DEC_LIST(UniquePin)
+
 struct thread_st {
     int id;
     ChannelPList channel_plist;
     FilterPList filter_plist;
-    I1List unique_pin_list;
+    UniquePinList unique_pin_list;
     pthread_t thread;
     struct timespec cycle_duration;
 };

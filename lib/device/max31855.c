@@ -29,17 +29,17 @@ static void printInt32(uint32_t d) {
 int max31855_read(float *result, int sclk, int cs, int miso) {
     uint32_t v=0;
     pinLow(cs);
-    delayUsBusy(DELAY);
+    DELAY_US_BUSY(DELAY);
     {
         int i;
         for (i = 31; i >= 0; i--) {
             pinLow(sclk);
-            delayUsBusy(DELAY);
+            DELAY_US_BUSY(DELAY);
             if (pinRead(miso)) {
                 v |= (1 << i);
             }
             pinHigh(sclk);
-            delayUsBusy(DELAY);
+            DELAY_US_BUSY(DELAY);
         }
     }
     pinHigh(cs);

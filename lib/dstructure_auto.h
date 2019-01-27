@@ -3,7 +3,7 @@
 
 #define DEC_PLIST(T) typedef struct {T **item; size_t length;size_t max_length;} T##PList;
 #define DEC_LIST(T) typedef struct {T *item; size_t length;size_t max_length;} T##List;
-#define DEC_LLIST(T) typedef struct {T *top; T *last; size_t length;} T##List;
+#define DEC_LLIST(T) typedef struct {T *top; T *last; size_t length;} T##LList;
 #define LIST_INITIALIZER {.item = NULL, .length = 0, .max_length = 0}
 #define LLIST_INITIALIZER {.top = NULL, .last = NULL, .length = 0}
 
